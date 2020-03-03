@@ -30,7 +30,7 @@ close all
 Ut_row = 850;               % user Ut row number
 Ut_element = 90;            % user Ut col number
 % yet to add its MIMO functionality
-N_BS = 5;                   % Number of BS antennas
+N_BS = 6;                   % Number of BS antennas
 %Pt = 100;                   % Transmit power in dBm
 
 % ----------- Users -----------
@@ -192,10 +192,10 @@ for sim_index = 1:sim_len
     % Implement Optimization algorithm here
     
     % Let the direct channel be denoted by Hsd (source to destination)
-    Hd = zeros(N_BS, N_users);
-    %Hd = 1e-4/sqrt(2)*(randn(N_BS, N_users)+1i*randn(N_BS, N_users));
-    %Hr = 1e-3/sqrt(2)*(randn(M, N_users)+1i*randn(M, N_users));
-    %Ht = 1e-3/sqrt(2)*(randn(M, N_BS)+1i*randn(M, N_BS));
+    %Hd = zeros(N_BS, N_users);
+    Hd = 1e-4/sqrt(2)*(randn(N_BS, N_users)+1i*randn(N_BS, N_users));
+    Hr = 1e-2/sqrt(2)*(randn(M, N_users)+1i*randn(M, N_users));
+    Ht = 1e-2/sqrt(2)*(randn(M, N_BS)+1i*randn(M, N_BS));
 
     ML_dataset{sim_index}.Hd = Hd;  % Store direct channel
     
@@ -203,12 +203,12 @@ for sim_index = 1:sim_len
     sigma_2 = 10^(sigma_2_dBm/10) * 1e-3; % (in Watts)
     
     % SINR target
-    SINR_target_dB = 10; % Check: changing target SINR should change the transmit power (the cvx_optval objective value)
+    SINR_target_dB = 20; % Check: changing target SINR should change the transmit power (the cvx_optval objective value)
     SINR_target = 10^(SINR_target_dB/10);
     
     % Alternating optimization algorithm (Algorithm 1 in [R1])
     % Set error threshold for alternating algorithm termination
-    eps_iter=1e-2;
+    eps_iter=1e-1;
     frac_error=1e10;    % Initialize fractional error
     obj_last = 1e3; % Initialize last objective value to a large number
     
@@ -241,7 +241,7 @@ for sim_index = 1:sim_len
         % ==== Optimize W while fixing theta ==== BS Transmit Beamforming
         disp('Active Beamformer Design')
         
-        [W, tau, INTERFERENCE, cvx_optval] = iter_opt_prob_1(H,sigma_2,SINR_target,int_users_matrix);
+        [W, tau, INTERFERENCE, cvx_status, cvx_optval] = iter_opt_prob_1(H,sigma_2,SINR_target,int_users_matrix);
         
         if  cvx_optval==Inf
             disp('Infeasible .. passing this iteration')
@@ -264,7 +264,7 @@ for sim_index = 1:sim_len
         % (P4') in paper
         disp('Passive Beamformer Design')
         
-       [V, a_aux, a, b, R, desired, interference, SINR_CONSTR, cvx_optval] = iter_opt_prob_2(W, Ht,Hr,Hd,sigma_2,SINR_target,int_users_matrix);
+       [V, a_aux, a, b, R, desired, interference, SINR_CONSTR, cvx_status, cvx_optval] = iter_opt_prob_2(W, Ht,Hr,Hd,sigma_2,SINR_target,int_users_matrix);
         
         disp(['CVX Status: ' cvx_status])
         
@@ -279,7 +279,7 @@ for sim_index = 1:sim_len
                 
             else             % Apply Gaussian Randomization
                 
-                num_rands = 1e4;                        % number of randomizations
+                num_rands = 1e3;                        % number of randomizations
                 
                 % Generate Gaussian random vector ~ CN(0, I)
                 %gpudev = gpuDevice();

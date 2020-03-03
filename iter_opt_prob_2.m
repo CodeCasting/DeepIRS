@@ -1,4 +1,4 @@
-function [V, a_aux, a, b, R, desired, interference, SINR_CONSTR, cvx_optval] = iter_opt_prob_2(W, Ht,Hr,Hd,sigma_2,SINR_target,int_users_matrix)
+function [V, a_aux, a, b, R, desired, interference, SINR_CONSTR, cvx_status, cvx_optval] = iter_opt_prob_2(W, Ht,Hr,Hd,sigma_2,SINR_target,int_users_matrix)
 
 N_users = size(Hd,2);
 M = size(Ht,1);

@@ -1,4 +1,4 @@
-function [W, tau, INTERFERENCE, cvx_optval] = iter_opt_prob_1(H,sigma_2,SINR_target,int_users_matrix)
+function [W, tau, INTERFERENCE, cvx_status, cvx_optval] = iter_opt_prob_1(H,sigma_2,SINR_target,int_users_matrix)
 
 N_BS = size(H,1);
 N_users = size(H,2);
