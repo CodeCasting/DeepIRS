@@ -83,15 +83,19 @@ sim_len = 1e2;              % Number of generated different multiuser scenarios
 % Using the DeepMIMO Dataset by Alkhateeb et al.
 
 % Select which machine the code is running on
-personal = 0;
-if personal == 1
+active_machine = 2;
+if active_machine == 0
     % Personal machine
     deepmimo_root_path= 'C:/Khafagy/DeepMIMO'; % Datasets/Large files
     code_folder = 'C:/Users/Mohammad/Google Drive (mgkhafagy@aucegypt.edu)/MATLAB Codes'; % Code stored on the cloud
-elseif personal == 0
-    % Research Lab Workstation
+elseif active_machine == 1
+    % Research Lab Windows Workstation
     deepmimo_root_path= 'D:/Khafagy/DeepMIMO';
     code_folder = 'C:/Users/Dr. M-Khafagy/Google Drive/MATLAB Codes';
+elseif active_machine == 2
+    % Research Lab Linux Workstation
+    deepmimo_root_path= '/home/research/Khafagy/DeepMIMO';
+    code_folder = '/home/research/Khafagy/git/DeepIRS'; 
 end
 cd(code_folder)
 
@@ -260,7 +264,7 @@ for sim_index = 1:sim_len
         % (P4') in paper
         disp('Passive Beamformer Design')
         
-       [V, a_aux, desired, interference, SINR_CONSTR, cvx_optval] = iter_opt_prob_2(W, Ht,Hr,Hd,sigma_2,SINR_target,int_users_matrix);
+       [V, a_aux, a, b, R, desired, interference, SINR_CONSTR, cvx_optval] = iter_opt_prob_2(W, Ht,Hr,Hd,sigma_2,SINR_target,int_users_matrix);
         
         disp(['CVX Status: ' cvx_status])
         

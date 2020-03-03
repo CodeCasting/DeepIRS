@@ -16,6 +16,8 @@ variable W(N_BS,N_users) complex; % add the word binary for binary constraints -
 variable tau nonnegative; % Auxiliary variable
 expressions INTERFERENCE(N_users,N_users);
 
+all_users = 1:N_users;
+
 for k = all_users
     int_users = int_users_matrix(k,:); % interfering users
     INTERFERENCE(:,k) = [W(:,int_users)'*H(:,k); sqrt(sigma_2)];
