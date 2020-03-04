@@ -25,6 +25,8 @@
 clear
 close all
 
+profile on
+
 % ---------- Base Station (BS) -----------
 % BS is one user with the following row and column indices
 Ut_row = 850;               % user Ut row number
@@ -171,23 +173,25 @@ user_loc{N_users} = {};
 % Fix seed
 rng(1);
 
+myCluster = parcluster();
+myPool = parpool(myCluster);
+
+
 disp('Looping over different multi-user patterns and generating optimized matrices')
-for sim_index = 1:sim_len
+parfor sim_index = 1:sim_len
     disp(['=== User pattern ' num2str(sim_index) ' out of ' num2str(sim_len) ' ====='])
-    ML_dataset{sim_index}.Ht = Ht; % Store transmit (1st hop) channel
     
     % Select N_users random user indices
-    clear Hr
-    Hr{N_users} = [];
-    users = randperm(params.num_user, N_users);
-    for user_ind = 1:N_users
-        Hr{user_ind} = DeepMIMO_dataset{1}.user{users(user_ind)}.channel;
-        %user_loc{user_ind} = DeepMIMO_dataset{1}.user{users(user_ind)}.loc;
-    end
-    Hr = [Hr{:}];
+%     clear Hr
+%     Hr{N_users} = [];
+%     users = randperm(params.num_user, N_users);
+%     for user_ind = 1:N_users
+%         Hr{user_ind} = DeepMIMO_dataset{1}.user{users(user_ind)}.channel;
+%         %user_loc{user_ind} = DeepMIMO_dataset{1}.user{users(user_ind)}.loc;
+%     end
+%     Hr = [Hr{:}];
     
-    ML_dataset{sim_index}.Hr = Hr;  % Store receive (2nd hop) channel
-    %ML_dataset{sim_index}.user_loc = [user_loc{:}]; % Store user_locations
+    
     
     % Implement Optimization algorithm here
     
@@ -197,7 +201,10 @@ for sim_index = 1:sim_len
     Hr = 1e-2/sqrt(2)*(randn(M, N_users)+1i*randn(M, N_users));
     Ht = 1e-2/sqrt(2)*(randn(M, N_BS)+1i*randn(M, N_BS));
 
+    ML_dataset{sim_index}.Ht = Ht; % Store transmit (1st hop) channel
     ML_dataset{sim_index}.Hd = Hd;  % Store direct channel
+    ML_dataset{sim_index}.Hr = Hr;  % Store receive (2nd hop) channel
+    %ML_dataset{sim_index}.user_loc = [user_loc{:}]; % Store user_locations
     
     sigma_2_dBm = -80; % Noise variance in dBm
     sigma_2 = 10^(sigma_2_dBm/10) * 1e-3; % (in Watts)
@@ -212,7 +219,7 @@ for sim_index = 1:sim_len
     frac_error=1e10;    % Initialize fractional error
     obj_last = 1e3; % Initialize last objective value to a large number
     
-    disp('Running alternating optimization algorithm')
+    %disp('Running alternating optimization algorithm')
     r=1;            % iteration index
     % Initialize reflection matrix theta
     beta_vec = ones(M,1);               % Fixed to 1 for now as in the paper
@@ -223,7 +230,7 @@ for sim_index = 1:sim_len
     
     % Check rank criterion for feasbility of the initial theta choice
     while ~(rank(H) == N_users) % if infeasible choice, randomize and check again
-        disp('infeasible initial choice of theta, .. reselecting ..')
+        %disp('infeasible initial choice of theta, .. reselecting ..')
         theta_vec = 2*pi*rand(M,1);           % Uniformly randomized from 0 to 2*pi
         theta_mat= diag(beta_vec.*exp(1i*theta_vec));
         H = Ht'*(theta_mat')*Hr + Hd;
@@ -233,22 +240,22 @@ for sim_index = 1:sim_len
     
     while (frac_error > eps_iter)  && ~contains(cvx_status,'Infeasible','IgnoreCase',true)
         if mod(r,1e2)==0
-            disp(['Iteration r =' num2str(r)])
+            %disp(['Iteration r =' num2str(r)])
         end
         
         H = Ht'*(theta_mat')*Hr + Hd;
 
         % ==== Optimize W while fixing theta ==== BS Transmit Beamforming
-        disp('Active Beamformer Design')
+        %disp('Active Beamformer Design')
         
         [W, tau, INTERFERENCE, cvx_status, cvx_optval] = iter_opt_prob_1(H,sigma_2,SINR_target,int_users_matrix);
         
         if  cvx_optval==Inf
-            disp('Infeasible .. passing this iteration')
+            %disp('Infeasible .. passing this iteration')
             continue
         end
-        disp(['CVX Status: ' cvx_status ', CVX_optval = ' num2str(10*log10(cvx_optval*1000)) ' dBm'])
-        disp(['CVX Status: ' cvx_status ', CVX_optval = ' num2str(10*log10(trace(W'*W)*1000)) ' dBm'])
+        %disp(['CVX Status: ' cvx_status ', CVX_optval = ' num2str(10*log10(cvx_optval*1000)) ' dBm'])
+        %disp(['CVX Status: ' cvx_status ', CVX_optval = ' num2str(10*log10(trace(W'*W)*1000)) ' dBm'])
 
         frac_error = abs(obj_last - cvx_optval)/obj_last *100;
         obj_last = cvx_optval;
@@ -262,14 +269,14 @@ for sim_index = 1:sim_len
         
         % ==== Optimize theta while fixing W ==== IRS Reflection Matrix
         % (P4') in paper
-        disp('Passive Beamformer Design')
+        %disp('Passive Beamformer Design')
         
        [V, a_aux, a, b, R, desired, interference, SINR_CONSTR, cvx_status, cvx_optval] = iter_opt_prob_2(W, Ht,Hr,Hd,sigma_2,SINR_target,int_users_matrix);
         
-        disp(['CVX Status: ' cvx_status])
+        %disp(['CVX Status: ' cvx_status])
         
         if ~contains(cvx_status,'Infeasible','IgnoreCase',true)
-            disp('Running Gaussian Randomization')
+            %disp('Running Gaussian Randomization')
             [U,D] = eig(full(V));                         % Eigenvalue Decomposition
             if rank(full(V)) == 1
                 v_bar = U*sqrt(D);
@@ -316,7 +323,7 @@ for sim_index = 1:sim_len
                     cvx_status = 'Infeasible';
                 end
                 
-                disp(['CVX Status after randomization: ' cvx_status])
+                %disp(['CVX Status after randomization: ' cvx_status])
             end
         end
         
@@ -331,8 +338,12 @@ for sim_index = 1:sim_len
     % ----------- end iterative algorithm ------------------
     
 end
+
+delete(gcp('nocreate'))
+
 save([deepmimo_root_path '/saved_datasets.mat'], 'ML_dataset')
 disp(['Elapsed time = ' num2str(toc/60) ' minutes.'])
+
 
 %% Build Neural Network here
 
