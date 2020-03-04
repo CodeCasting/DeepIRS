@@ -337,7 +337,7 @@ disp(['Elapsed time = ' num2str(toc/60) ' minutes.'])
 %% Build Neural Network here
 
 % For regression neural network, we can directly use newgrnn
-
+tic
 % Prepare INPUT and OUTPUT matrices
 INPUT = zeros(sim_len,2*(M * N_users + M * N_BS + N_BS* N_users)); % The 3 vectorized channel matrices
 OUTPUT = zeros(sim_len, 2*(M + N_BS* N_users)); % Vectorized beamformers
@@ -356,6 +356,7 @@ end
 net = newgrnn(INPUT.',OUTPUT.');
 y = net(INPUT.').';
 
+toc
 % Training_Size=[2  1e4*(1:.4:3)];        % Training Dataset Size vector
 % % Should be made a function of sim_len: the size of our stored optimized
 % % data, which will be split into training, testing, and validation
