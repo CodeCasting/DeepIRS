@@ -1,4 +1,4 @@
-function [ACTOR,CRITIC,OPTIONS,agent] = drl_IRS(inputArg1,inputArg2)
+function [ACTOR,CRITIC,OPTIONS,agent] = drl_IRS(P_t,H_t,H_r)
 
 %% Function Documentation
 % This function implements the algorithm proposed in the paper:
@@ -7,6 +7,20 @@ function [ACTOR,CRITIC,OPTIONS,agent] = drl_IRS(inputArg1,inputArg2)
 % Surface Assisted Multiuser MISO Systems Exploiting Deep Reinforcement 
 % Learning"
 
+%% Simulation Parameters
+D = 1e5; % Length of memory window
+
+
+gam = 0.99 % Discount factor
+
+u_c = 1e-3;
+u_a = 1e-3;
+
+t_c = 1e-3;
+t_a = 1e-3;
+
+lam_c= 1e-5;
+lam_a= 1e-5;
 
 %% 
 % Actor Network
