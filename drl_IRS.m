@@ -15,13 +15,24 @@ function [ACTOR,CRITIC,OPTIONS,agent, W, theta] = drl_IRS(P_t,Ht,Hr,Hd)
 disp('---------- Running DDPG --------')
 
 %% Simulation Parameters (in Table 1 in the paper)
-gam = 0.99; % Discount factor
-u_c = 1e-3;     % learning rate for training critic network uptate
+
+% For more info about DDPG agent in MATLAB, see:
+% https://www.mathworks.com/help/reinforcement-learning/ug/ddpg-agents.html#mw_086ee5c6-c185-4597-aefc-376207c6c24c
+% For other supported Reinforcement Learning agents see:
+% https://www.mathworks.com/help/reinforcement-learning/ug/create-agents-for-reinforcement-learning.html
+
+% Actor
 u_a = 1e-3;     % learning rate for training actor network uptate
-t_c = 1e-3;     % learning rate for target critic network uptate
-t_a = 1e-3;     % learning rate for target actor network uptate
-lam_c= 1e-5;    % decaying rate for training critic network uptate
 lam_a= 1e-5;    % decaying rate for training actor network uptate
+% Target Actor
+t_a = 1e-3;     % learning rate for target actor network uptate
+% Critic
+u_c = 1e-3;     % learning rate for training critic network uptate
+lam_c= 1e-5;    % decaying rate for training critic network uptate
+% Target Critic
+t_c = 1e-3;     % learning rate for target critic network uptate
+
+gam = 0.99;     % Discount factor
 D = 1e5;        % Length of memory window
 N_epis = 5e3;   % Number of episodes (changed due to DUPLICATE NAME)
 T = 2e4;        % Number of steps per episode
@@ -100,7 +111,6 @@ critic_layers = [
     fullyConnectedLayer(length(actor_OUTPUT),'Name','c_output')
     regressionLayer('Name','c_outReg')
     
-    % Power and Modular Normalization Layer
     ];
 
 % Options
