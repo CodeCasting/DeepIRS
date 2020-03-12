@@ -47,7 +47,14 @@ N_BS = size(Ht,2);
 INPUT = zeros(sim_len,2*(M * N_users + M * N_BS + N_BS* N_users)); % The 3 vectorized channel matrices
 actor_OUTPUT = zeros(sim_len, 2*(M + N_BS* N_users)); % Vectorized beamformers
 
-%% Define Actor/Critic NN Layers and Agent
+
+%% Create Environment
+% https://www.mathworks.com/help/reinforcement-learning/matlab-environments.html
+
+
+%% Define Actor/Critic NN Layers of the Learning Agent
+
+
 
 % Whitening Process for Input Decorrelation 
 
@@ -113,8 +120,20 @@ critic_layers = [
     
     ];
 
+% Adjust DDPG options
+OPTIONS = rlDDPGAgentOptions('DiscountFactor',gam, ...
+    'ExperienceBufferLength',T,...
+    'MiniBatchSize', W_exp);
+
+% Create DDPG agent
+agent = rlDDPGAgent(ACTOR,CRITIC,OPTIONS);
+
+
+%% Train the agent in the environment
+% https://www.mathworks.com/help/reinforcement-learning/ug/train-reinforcement-learning-agents.html
+
 % Options
-options = trainingOptions('adam', ...       % Updated as in the paper
+train_options = trainingOptions('adam', ...       % Updated as in the paper
     'MiniBatchSize',W_exp, ...              % Updated as in the paper
     'MaxEpochs',20, ...
     'InitialLearnRate',1e-1, ...
@@ -129,15 +148,6 @@ options = trainingOptions('adam', ...       % Updated as in the paper
     'Verbose',0, ...    % 1
     'ExecutionEnvironment', 'auto', ...
     'VerboseFrequency',VerboseFrequency);
-
-% Adjust DDPG options
-OPTIONS = rlDDPGAgentOptions('DiscountFactor',gam, ...
-    'ExperienceBufferLength',T,...
-    'MiniBatchSize', W_exp);
-
-% Create DDPG agent
-agent = rlDDPGAgent(ACTOR,CRITIC,OPTIONS);
-
 
 end
 
