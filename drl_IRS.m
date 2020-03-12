@@ -2,7 +2,6 @@ function [ACTOR,CRITIC,OPTIONS,agent, W, theta] = drl_IRS(P_t,Ht,Hr,Hd)
 
 %% Function Documentation
 % This function implements the algorithm proposed in the paper preprint:
-
 % Chongwen Huang, Ronghong Mo and Chau Yuen, "Reconfigurable Intelligent
 % Surface Assisted Multiuser MISO Systems Exploiting Deep Reinforcement
 % Learning" currently available on ARXIV: https://arxiv.org/abs/2002.10072
@@ -47,14 +46,10 @@ N_BS = size(Ht,2);
 INPUT = zeros(sim_len,2*(M * N_users + M * N_BS + N_BS* N_users)); % The 3 vectorized channel matrices
 actor_OUTPUT = zeros(sim_len, 2*(M + N_BS* N_users)); % Vectorized beamformers
 
-
 %% Create Environment
 % https://www.mathworks.com/help/reinforcement-learning/matlab-environments.html
 
-
 %% Define Actor/Critic NN Layers of the Learning Agent
-
-
 
 % Whitening Process for Input Decorrelation 
 
@@ -127,7 +122,6 @@ OPTIONS = rlDDPGAgentOptions('DiscountFactor',gam, ...
 
 % Create DDPG agent
 agent = rlDDPGAgent(ACTOR,CRITIC,OPTIONS);
-
 
 %% Train the agent in the environment
 % https://www.mathworks.com/help/reinforcement-learning/ug/train-reinforcement-learning-agents.html
