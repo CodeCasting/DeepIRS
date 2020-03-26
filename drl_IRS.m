@@ -4,19 +4,23 @@
 % Surface Assisted Multiuser MISO Systems Exploiting Deep Reinforcement
 % Learning" currently available on ARXIV: https://arxiv.org/abs/2002.10072
 % Accepted by IEEE JSAC special issue on Multiple Antenna Technologies for Beyond 5G
+
 % The actor network state is the stacked vectorized form of all channels.
 % The actor network action is a stacked form of the active/passive beamforming matrices.
 % The reward is the resulting sum throughput.
-% Both states and actions are continious here
+% Both states and actions are continious here, thus using DDPG learning agent.
 
 % Code written by Mohammad Galal Khafagy
 % Postdoctoral Researcher, American University in Cairo (AUC)
 % March 2020
 
-% This paper does not take the direct link into account
+% This paper does not take the direct link into account, but we can still 
+% take it here
 
 % This code is using the Reinforcement Learning Toolbox of MATLAB
 disp('---------- Running DDPG --------')
+
+% Environment and Agent are first created, then trained over the channels.
 
 %% Simulation Parameters (in Table 1 in the paper)
 
@@ -79,7 +83,7 @@ actInfo = rlNumericSpec(output_len);
 % Create Environment
 env = rlFunctionEnv(obsInfo,actInfo,stepfcn,resetfcn);
 
-%% Learning Agent
+%% Create Learning Agent
 % https://www.mathworks.com/help/reinforcement-learning/ug/ddpg-agents.html
 % A DDPG agent consists of two agents: an actor and a critic, cooperating
 % together to get a better output action
