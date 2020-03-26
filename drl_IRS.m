@@ -1,7 +1,5 @@
-function [ACTOR,CRITIC,OPTIONS,agent, W, theta] = drl_IRS(P_t,Ht,Hr,Hd)
-
-%% Function/Script Description and Credits
-% This function/script implements the algorithm proposed in the paper preprint:
+%% Script Description and Credits
+% This script implements the algorithm proposed in the paper preprint:
 % Chongwen Huang, Ronghong Mo and Chau Yuen, "Reconfigurable Intelligent
 % Surface Assisted Multiuser MISO Systems Exploiting Deep Reinforcement
 % Learning" currently available on ARXIV: https://arxiv.org/abs/2002.10072
@@ -192,6 +190,4 @@ train_options = trainingOptions('adam', ...       % Updated as in the paper
     'Verbose',0, ...    % 1
     'ExecutionEnvironment', 'auto', ...
     'VerboseFrequency',VerboseFrequency);
-
-end
 
