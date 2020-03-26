@@ -87,7 +87,7 @@ sim_len = 1e2;              % Number of generated different multiuser scenarios
 % Select which machine the code is running on
 active_machine = 2;
 if active_machine == 0
-    % Personal machine
+    % Personal machines
     deepmimo_root_path= 'C:/Khafagy/DeepMIMO'; % Datasets/Large files
     code_folder = 'C:/Users/Mohammad/Google Drive (mgkhafagy@aucegypt.edu)/MATLAB Codes'; % Code stored on the cloud
 elseif active_machine == 1
@@ -96,8 +96,8 @@ elseif active_machine == 1
     code_folder = 'C:/Users/Dr. M-Khafagy/Google Drive/MATLAB Codes';
 elseif active_machine == 2
     % Research Lab Linux Workstation
-    deepmimo_root_path= '/home/research/Khafagy/DeepMIMO';
-    code_folder = '/home/research/Khafagy/git/DeepIRS'; 
+    deepmimo_root_path= '/home/khafagy/Storage/DeepMIMO';
+    code_folder = '/home/khafagy/Storage/git/DeepIRS'; 
 end
 cd(code_folder)
 
