@@ -5,9 +5,13 @@
 % Learning" currently available on ARXIV: https://arxiv.org/abs/2002.10072
 % Accepted by IEEE JSAC special issue on Multiple Antenna Technologies for Beyond 5G
 
-% The actor network state is the stacked vectorized form of all channels.
+% The actor network state is the stacked vectorized form of all channels in 
+% addition to previous action, transmit/received powers as will be specified shortly.
+ 
 % The actor network action is a stacked form of the active/passive beamforming matrices.
+
 % The reward is the resulting sum throughput.
+
 % Both states and actions are continious here, thus using DDPG learning agent.
 
 % Code written by Mohammad Galal Khafagy
@@ -15,7 +19,8 @@
 % March 2020
 
 % This paper does not take the direct link into account, but we can still 
-% take it here
+% take it here if we have it in the dataset
+% Channel model is a narrow-band model (frequency-flat channel fading)
 
 % This code is using the Reinforcement Learning Toolbox of MATLAB
 disp('---------- Running DDPG --------')
@@ -52,33 +57,57 @@ N_users = size(Hr,2);
 M = size(Ht,1);
 N_BS = size(Ht,2);
 
-input_len = 2*(M * N_users + M * N_BS + N_BS* N_users); % Observation (state) length (multiplied by 2 to account for complex nature)
-output_len = 2*(M + N_BS* N_users);                     % Action length (number of reflecting elements + size of BS beamforming matrix)
+obs_len = 2*(M * N_users + M * N_BS + N_BS* N_users); % Observation (state) length (multiplied by 2 to account for complex nature)
+act_len = 2*(M + N_BS* N_users);                      % Action length (number of reflecting elements + size of BS beamforming matrix)
 
-INPUT = zeros(sim_len,input_len); % The stacked 3 vectorized channel matrices
-actor_OUTPUT = zeros(sim_len, output_len); % Vectorized beamformers
+INPUT = zeros(sim_len,obs_len); % The stacked 3 vectorized channel matrices
+actor_OUTPUT = zeros(sim_len, act_len); % Vectorized beamformers
 
 %% Create Environment
 % https://www.mathworks.com/help/reinforcement-learning/matlab-environments.html
+% https://www.mathworks.com/help/reinforcement-learning/ug/create-matlab-environments-for-reinforcement-learning.html
+% https://www.mathworks.com/help/reinforcement-learning/ug/create-custom-reinforcement-learning-environment-in-matlab.html
+
 % The environment at a certain dtate receives the action and outputs the
 % new state and the returned reward
 
 % Our reward here in the paper is the total throughput, which we can change
 % later to the (negative) sum power if needed
 
-% Observation (state)
-obsInfo = rlNumericSpec(input_len);
+% ==== Specification of Observation and Action =======
+
+% Observation (state) specification
+obs_lower_lim = -Inf;
+obs_upper_lim =  Inf;
+obsInfo = rlNumericSpec(obs_len, 'LowerLimit', obs_lower_lim, 'UpperLimit',obs_upper_lim);
 %obsInfo.Name = 'observation';
 %obsInfo.Description = 'instantaneously observed channels';
 
-% Action
-actInfo = rlNumericSpec(output_len);
+% Action Specification
+act_lower_lim = -Inf;
+act_upper_lim =  Inf; % revise limits later for reflection coefficients
+actInfo = rlNumericSpec(act_len, 'LowerLimit', act_lower_lim, 'UpperLimit',act_upper_lim);
 
 % Step Function
+% https://www.mathworks.com/help/reinforcement-learning/ug/define-reward-signals.html
 %[Observation,Reward,IsDone,LoggedSignals] = stepfcn(Action,LoggedSignals)
 
 % Reset Function
-%[InitialObservation,LoggedSignals] = myResetFunctio
+%[InitialObservation,LoggedSignals] = myResetFunction
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 % Create Environment
 env = rlFunctionEnv(obsInfo,actInfo,stepfcn,resetfcn);
@@ -104,21 +133,21 @@ INPUT  = [real(Ht(:)); imag(Ht(:));
 % 1-a) Actor Network
 actor_net = [
     % INPUT Layer
-    imageInputLayer([input_len,1,1],'Name','a_input')
+    imageInputLayer([obs_len,1,1],'Name','a_input')
     % Hidden Fully Connected Layer 1 with/without Dropout
-    fullyConnectedLayer(output_len,'Name','a_fully1')
+    fullyConnectedLayer(act_len,'Name','a_fully1')
     tanhLayer('Name','a_tanh1')
     %dropoutLayer(0.5,'Name','a_dropout1')
     % Batch Normalization Layer 1
     batchNormalizationLayer('Name','a_batchNorm1')
     % Hidden Fully Connected Layer 2 with/without Dropout
-    fullyConnectedLayer(4*output_len,'Name','a_fully2')
+    fullyConnectedLayer(4*act_len,'Name','a_fully2')
     tanhLayer('Name','a_tanh2')
     %dropoutLayer(0.5,'Name','a_dropout2')
     % Batch Normalization Layer 2
     batchNormalizationLayer('Name','a_batchNorm2')
     % OUTPUT Layer
-    fullyConnectedLayer(output_len,'Name','a_output')
+    fullyConnectedLayer(act_len,'Name','a_output')
     regressionLayer('Name','a_outReg')
     % Power and Modular Normalization Layer still
     ];
@@ -137,15 +166,15 @@ ACTOR = rlDeterministicActorRepresentation(actor_net,...
 % Critic Network
 critic_net = [
     % INPUT Layer
-    imageInputLayer([input_len+output_len,1,1],'Name','c_input')
+    imageInputLayer([obs_len+act_len,1,1],'Name','c_input')
     % Hidden Fully Connected Layer 1 with/without Dropout
-    fullyConnectedLayer(input_len+output_len,'Name','c_fully1')
+    fullyConnectedLayer(obs_len+act_len,'Name','c_fully1')
     tanhLayer('Name','c_tanh1')
     %dropoutLayer(0.5,'Name','c_dropout1')
     % Batch Normalization Layer 1
     batchNormalizationLayer('Name','c_batchNorm1')
     % Hidden Fully Connected Layer 2 with/without Dropout
-    fullyConnectedLayer(4*(input_len+output_len),'Name','c_fully2')
+    fullyConnectedLayer(4*(obs_len+act_len),'Name','c_fully2')
     tanhLayer('Name','c_tanh2')
     %dropoutLayer(0.5,'Name','c_dropout2')
     % Batch Normalization Layer 2
