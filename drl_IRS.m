@@ -50,23 +50,24 @@ D = 1e5;        % Length of memory window
 W_exp = 16;     % Number of experiences in the mini-batch
 U = 1;          % Number of steps synchronizing target with training network
 
-
 % For Training
 N_epis = 5e3;           % Number of episodes (changed due to DUPLICATE NAME)
 T = 2e4;                % Number of steps per episode
 used_optzr = 'adam';    % Used optimizer
 
-
 %% Memory Preallocation
 N_users = size(Hr,2);
 M = size(Ht,1);
 N_BS = size(Ht,2);
+% Channel Observations
+chan_obs_len = 2*(M * N_users + M * N_BS + N_BS* N_users); % channel observation (state) length (multiplied by 2 to account for complex nature)
+% Action length (number of reflecting elements + size of BS beamforming matrix)
+% multiplied by 2 for complex nature
+act_len = 2*(M + N_BS* N_users);     
 
-obs_len = 2*(M * N_users + M * N_BS + N_BS* N_users); % Observation (state) length (multiplied by 2 to account for complex nature)
-act_len = 2*(M + N_BS* N_users);                      % Action length (number of reflecting elements + size of BS beamforming matrix)
-
-INPUT = zeros(sim_len,obs_len); % The stacked 3 vectorized channel matrices
-actor_OUTPUT = zeros(sim_len, act_len); % Vectorized beamformers
+transmit_pow_len = 2*N_users;
+receive_pow_len = 2*N_users^2;
+obs_len = transmit_pow_len + receive_pow_len + act_len + chan_obs_len;  
 
 %% Create Environment
 % https://www.mathworks.com/help/reinforcement-learning/matlab-environments.html
@@ -86,9 +87,6 @@ actor_OUTPUT = zeros(sim_len, act_len); % Vectorized beamformers
 % 2- The received power of all users in the t^{th} time step.
 % 3- The previous action in the (t-1)^{th} time step.
 % 4- The channels.
-
-
-
 obs_lower_lim = -Inf;
 obs_upper_lim =  Inf;
 obsInfo = rlNumericSpec(obs_len, 'LowerLimit', obs_lower_lim, 'UpperLimit',obs_upper_lim);
@@ -100,12 +98,7 @@ act_lower_lim = -Inf;
 act_upper_lim =  Inf; % revise limits later for reflection coefficients
 actInfo = rlNumericSpec(act_len, 'LowerLimit', act_lower_lim, 'UpperLimit',act_upper_lim);
 
-% Step Function
-% https://www.mathworks.com/help/reinforcement-learning/ug/define-reward-signals.html
-
 % write stepfcn
-%[Observation,Reward,IsDone,LoggedSignals] = stepfcn(Action,LoggedSignals)
-
 % write resetfcn.m
 
 % Create Environment
