@@ -111,15 +111,6 @@ MU_MISO_IRS_env = rlFunctionEnv(obsInfo,actInfo,stepfcn,resetfcn);
 
 % Whitening Process for Input Decorrelation
 
-% Define
-INPUT  = [real(Ht(:)); imag(Ht(:));
-    real(Hr(:)); imag(Hr(:));
-    real(Hd(:)); imag(Hd(:))].';
-
-%OUTPUT = [real(TEMP.W(:)); imag(TEMP.W(:));
-%    real(TEMP.theta(:)); imag(TEMP.theta(:))].';
-
-
 % 1- Create an actor using an rlDeterministicActorRepresentation object.
 
 % 1-a) Actor Network
