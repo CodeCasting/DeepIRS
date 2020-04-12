@@ -113,7 +113,7 @@ MU_MISO_IRS_env = rlFunctionEnv(obsInfo,actInfo,stepfcn,resetfcn);
 % A DDPG agent consists of two agents: an actor and a critic, cooperating
 % together to get a better output action
 
-% Whitening Process for Input Decorrelation
+% ---- Whitening Process for Input Decorrelation --- NOT DONE YET
 
 % 1- Create an actor using an rlDeterministicActorRepresentation object.
 
@@ -147,9 +147,10 @@ actor_actInfo
 % https://www.mathworks.com/help/reinforcement-learning/ref/rlrepresentationoptions.html
 actor_repOpts = rlRepresentationOptions(...
     'Optimizer',used_optmzr,...
-    'LearnRate',,...
-    'OptimizerParameters',''
+    'LearnRate', u_a,...
     'UseDevice',used_device);
+% yet to define the decay rate and differentiate between target and actual
+% networks
 
 % Create actor agent
 ACTOR = rlDeterministicActorRepresentation(actor_net,...
@@ -184,7 +185,13 @@ critic_obsInfo
 
 critic_actInfo
 
-critic_repOpts
+critic_repOpts = rlRepresentationOptions(...
+    'Optimizer',used_optmzr,...
+    'LearnRate', u_c,...
+    'UseDevice',used_device);
+% yet to define the decay rate and differentiate between target and actual
+% networks
+
 
 % Create critic agent
 CRITIC = rlQValueRepresentation(critic_net,...
