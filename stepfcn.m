@@ -1,4 +1,4 @@
-function [observation,Reward,IsDone,LoggedSignals] = stepfcn(action, Ht, Hr, Hd, LoggedSignals)
+function [observation,Reward,IsDone,LoggedSignals] = stepfcn(action, LoggedSignals)
 % https://www.mathworks.com/help/reinforcement-learning/ug/define-reward-signals.html
 
 % input action is taken by the actor network
@@ -17,6 +17,11 @@ theta_mat = diag(theta_vec);
 
 % Extract past action from Logged signals
 past_action = LoggedSignals.Action;
+
+% Extract current channel from logged signals
+Ht = LoggedSignals.new_chan_obs.Ht;
+Hr = LoggedSignals.new_chan_obs.Hr;
+Hd = LoggedSignals.new_chan_obs.Hd;
 
 % Calculate transmit power for each user (stacking real and imag powers)
 transmit_pow = [diag(real(W)'*real(W)); diag(imag(W)'*imag(W))];
