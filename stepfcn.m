@@ -1,6 +1,10 @@
 function [observation,Reward,IsDone,LoggedSignals] = stepfcn(action, Ht, Hr, Hd, LoggedSignals)
 % https://www.mathworks.com/help/reinforcement-learning/ug/define-reward-signals.html
 
+% input action is taken by the actor network
+% This step function calculates the new state/observation and reward
+% due to taken action
+
 N_users = size(Hr,2);
 M = size(Ht,1);
 N_BS = size(Ht,2);
@@ -36,8 +40,15 @@ observation = [transmit_pow;
 
 %IsDone = ;
 
+new_chan_index = LoggedSignals.chan_index+1;
+new_chan_obs.Ht = Ht(new_chan_index);   % check indices
+new_chan_obs.Hr = Hr(new_chan_index);   % check indices
+new_chan_obs.Hd = Hd(new_chan_index);   % check indices
+
 % Update Logged Signals
 LoggedSignals.Action = action;          % Return past action
 LoggedSignals.State = observation;      % Return past state
+LoggedSignals.new_chan_obs = new_chan_obs;
+LoggedSignals.chan_index = new_chan_index;
 
 end
