@@ -1,5 +1,5 @@
 % Reset function for the MU-MISO IRS environment
-function [InitialObservation,LoggedSignal] = resetfcn()
+function [InitialObservation,LoggedSignals] = resetfcn()
 
 transmit_pow
 receive_pow
@@ -12,6 +12,6 @@ W_vec = ones(2*N_BS*N_users,1);
 theta_vec = ones(2*M,1);
 action = [W_vec; theta_vec];
 % Return initial environment state variables as logged signals.
-LoggedSignal.State = [transmit_pow; receive_pow; action; chan_obs];
-InitialObservation = LoggedSignal.State;
+LoggedSignals.State = [transmit_pow; receive_pow; chan_obs; action];
+InitialObservation = LoggedSignals.State;
 end
