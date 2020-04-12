@@ -34,6 +34,10 @@ disp('---------- Running DDPG --------')
 % For other supported Reinforcement Learning agents see:
 % https://www.mathworks.com/help/reinforcement-learning/ug/create-agents-for-reinforcement-learning.html
 
+% ---------- For Separate ACTOR/CRITIC AGENTS -----------------
+used_optmzr = 'adam';   % Used optimizer
+used_device = 'gpu';    % gpu or cpu
+% Learning and Decay rates
 % Actor
 u_a = 1e-3;     % learning rate for training actor network uptate
 lam_a= 1e-5;    % decaying rate for training actor network uptate
@@ -45,15 +49,15 @@ lam_c= 1e-5;    % decaying rate for training critic network uptate
 % Target Critic
 t_c = 1e-3;     % learning rate for target critic network uptate
 
-gam = 0.99;     % Discount factor
-D = 1e5;        % Length of memory window
+% ------------- Created DDPG AGENT Options -------------------
+D = 1e5;        % Length of replay experience memory window
 W_exp = 16;     % Number of experiences in the mini-batch
+gam = 0.99;     % Discount factor
 U = 1;          % Number of steps synchronizing target with training network
 
-% For Training
+% ------------- For DDPG AGENT Training ----------------------
 N_epis = 5e3;           % Number of episodes (changed due to DUPLICATE NAME)
 T = 2e4;                % Number of steps per episode
-used_optzr = 'adam';    % Used optimizer
 
 %% Memory Preallocation
 N_users = size(Hr,2);
@@ -139,14 +143,23 @@ actor_obsInfo
 
 actor_actInfo
 
+
+% https://www.mathworks.com/help/reinforcement-learning/ref/rlrepresentationoptions.html
+actor_repOpts = rlRepresentationOptions(...
+    'Optimizer',used_optmzr,...
+    'LearnRate',,...
+    'OptimizerParameters',''
+    'UseDevice',used_device);
+
 % Create actor agent
 ACTOR = rlDeterministicActorRepresentation(actor_net,...
     actor_obsInfo,...
     actor_actInfo,...
     'Observation','channels',...
-    'Action','beamformers');
+    'Action','beamformers',...
+    actor_repOpts);
 
-% Critic Network
+% 1-b) Critic Network
 critic_net = [
     % INPUT Layer
     imageInputLayer([obs_len+act_len,1,1],'Name','c_input')
@@ -171,19 +184,23 @@ critic_obsInfo
 
 critic_actInfo
 
+critic_repOpts
+
 % Create critic agent
 CRITIC = rlQValueRepresentation(critic_net,...
     critic_obsInfo,...
     critic_actInfo,...
     'Observation','states_actions',...
-    'Action','Q_approx');
+    'Action','Q_approx',...
+    critic_repOpts);
 
-% 3- Specify DDPG options
+%% 3- Specify DDPG options
 DDPG_agent_OPTIONS =    rlDDPGAgentOptions('DiscountFactor',gam, ...
-    'ExperienceBufferLength',T,...
-    'MiniBatchSize', W_exp);
+    'ExperienceBufferLength',D,...
+    'MiniBatchSize', W_exp,...
+    'TargetUpdateFrequency', U);
 
-% 4- Create DDPG agent
+%% 4- Create DDPG agent
 % https://www.mathworks.com/help/reinforcement-learning/ref/rlddpgagent.html
 DDPG_AGENT = rlDDPGAgent(ACTOR,CRITIC,DDPG_agent_OPTIONS);
 
@@ -207,19 +224,21 @@ trainStats = train(DDPG_AGENT,...           % Agent
                    DDPG_train_options);     % Training Options
 
 
-%  % Write the algo in paper, then check later how the MATLAB commands
-%  % may summarize it 
-%     for episodes = 1:N      % loop over episodes
-%         % calculate s(1)
-%         
-%         for t = 1:T         % move over time instants
-%         % 1- obtain action a from actor network 
+%  % Write Algorithm 1 in paper, then annotate how the MATLAB commands
+%  % summarize it 
+% ------------------ DONE via TRAIN command -------------------
+%     for episodes = 1:N      % loop over episodes 
+% ---------------- DONE through RESET function ----------------
+%         % Initialize s(1)        
+%         for t = 1:T         % move over time instants         
+% ---------------- DONE through STEP function ----------------
+          % 1- obtain action a from actor network 
 %         % 2- observe next state
 %         % 3- observe instant reward
 %         % 4- store experience in replay memory
 %         
 %         % Obtain Q-value from critic network
-%         % Sample random mini-batches of size W of experiences from
+%         % Sample random mini-batches of size _exp of experiences from
 %         % experience replay memory \mathcal{M}
 %         
 %         % Construct critic network loss function
