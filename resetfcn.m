@@ -24,4 +24,11 @@ action = [W_vec; theta_vec];
 % Return initial environment state variables as logged signals.
 LoggedSignals.State = [transmit_pow; receive_pow; chan_obs; action];
 InitialObservation = LoggedSignals.State;
+
+all_users = 1:1:N_users;                    % vector of all user indices
+
+int_users_matrix = meshgrid(all_users).';   % indices of interfering users for each user
+int_users_matrix(1:N_users+1:N_users^2) = [];
+int_users_matrix = reshape(int_users_matrix, N_users-1, N_users).';
+LoggedSignals.int_users_matrix = int_users_matrix;
 end

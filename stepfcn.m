@@ -1,4 +1,4 @@
-function [observation,Reward,IsDone,LoggedSignals] = stepfcn(action, LoggedSignals)
+function [observation,Reward,LoggedSignals] = stepfcn(action, LoggedSignals)
 % https://www.mathworks.com/help/reinforcement-learning/ug/create-custom-reinforcement-learning-environment-in-matlab.html
 % https://www.mathworks.com/help/reinforcement-learning/ug/define-reward-signals.html
 
@@ -42,9 +42,20 @@ observation = [transmit_pow;
                chan_obs;
                past_action];
 
-% Calculate and return reward
+int_users_matrix = LoggedSignals.int_users_matrix;
 
-Reward = ;
+% Calculate and return reward
+H = Ht'*(theta_mat')*Hr + Hd;
+
+SINR = zeros(N_users,1);
+for  user_ind = 1 : N_users
+    desired = W(:,user_ind)'*H(:,user_ind);
+    int_users = int_users_matrix(user_ind,:); % interfering user indices
+    interf = [W(:,int_users)'*H(:,user_ind); sqrt(sigma_2)];
+    SINR(user_ind) = norm(desired,2)^2/norm(interf,2)^2;
+end
+
+Reward = sum(log2(1+SINR));
 
 %IsDone = ;
 
