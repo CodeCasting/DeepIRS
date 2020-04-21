@@ -174,7 +174,7 @@ OPTIONS =    rlDDPGAgentOptions('DiscountFactor',gam, ...
 % 4- Create DDPG agent
 agent = rlDDPGAgent(ACTOR,CRITIC,OPTIONS);
 
-%% Train the agent in the environment
+%% Let the agent interact with the environment
 % https://www.mathworks.com/help/reinforcement-learning/ug/train-reinforcement-learning-agents.html
 
 % Options
