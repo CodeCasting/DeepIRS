@@ -1,9 +1,15 @@
 function [observation,Reward,IsDone,LoggedSignals] = stepfcn(action, LoggedSignals)
+% https://www.mathworks.com/help/reinforcement-learning/ug/create-custom-reinforcement-learning-environment-in-matlab.html
 % https://www.mathworks.com/help/reinforcement-learning/ug/define-reward-signals.html
 
-% input action is taken by the actor network
+% Input action is taken by the actor network
 % This step function calculates the new state/observation and reward
-% due to taken action
+% due to taken (input) action
+
+% Extract current channel from logged signals
+Ht = LoggedSignals.new_chan_obs.Ht;
+Hr = LoggedSignals.new_chan_obs.Hr;
+Hd = LoggedSignals.new_chan_obs.Hd;
 
 N_users = size(Hr,2);
 M = size(Ht,1);
@@ -17,11 +23,6 @@ theta_mat = diag(theta_vec);
 
 % Extract past action from Logged signals
 past_action = LoggedSignals.Action;
-
-% Extract current channel from logged signals
-Ht = LoggedSignals.new_chan_obs.Ht;
-Hr = LoggedSignals.new_chan_obs.Hr;
-Hd = LoggedSignals.new_chan_obs.Hd;
 
 % Calculate transmit power for each user (stacking real and imag powers)
 transmit_pow = [diag(real(W)'*real(W)); diag(imag(W)'*imag(W))];
@@ -41,7 +42,9 @@ observation = [transmit_pow;
                chan_obs;
                past_action];
 
-%Reward = ;
+% Calculate and return reward
+
+Reward = ;
 
 %IsDone = ;
 
@@ -51,9 +54,9 @@ new_chan_obs.Hr = Hr(new_chan_index);   % check indices
 new_chan_obs.Hd = Hd(new_chan_index);   % check indices
 
 % Update Logged Signals
-LoggedSignals.Action = action;          % Return past action
-LoggedSignals.State = observation;      % Return past state
-LoggedSignals.new_chan_obs = new_chan_obs;
-LoggedSignals.chan_index = new_chan_index;
+LoggedSignals.Action = action;              % Return past action
+LoggedSignals.State = observation;          % Return past state
+LoggedSignals.new_chan_obs = new_chan_obs;  % Prepare coming channel
+LoggedSignals.chan_index = new_chan_index;  % Store new channel index
 
 end

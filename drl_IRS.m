@@ -39,15 +39,15 @@ used_optmzr = 'adam';   % Used optimizer
 used_device = 'gpu';    % gpu or cpu
 % Learning and Decay rates
 % Actor
-u_a = 1e-3;     % learning rate for training actor network uptate
-lam_a= 1e-5;    % decaying rate for training actor network uptate
+u_a = 1e-3;     % learning rate for training actor network update
+lam_a= 1e-5;    % decaying rate for training actor network update
 % Target Actor
-t_a = 1e-3;     % learning rate for target actor network uptate
+t_a = 1e-3;     % learning rate for target actor network update
 % Critic
-u_c = 1e-3;     % learning rate for training critic network uptate
-lam_c= 1e-5;    % decaying rate for training critic network uptate
+u_c = 1e-3;     % learning rate for training critic network update
+lam_c= 1e-5;    % decaying rate for training critic network update
 % Target Critic
-t_c = 1e-3;     % learning rate for target critic network uptate
+t_c = 1e-3;     % learning rate for target critic network update
 
 % ------------- Created DDPG AGENT Options -------------------
 D = 1e5;        % Length of replay experience memory window
@@ -63,6 +63,7 @@ T = 2e4;                % Number of steps per episode
 N_users = size(Hr,2);
 M = size(Ht,1);
 N_BS = size(Ht,2);
+
 % Channel Observations
 chan_obs_len = 2*(M * N_users + M * N_BS + N_BS* N_users); % channel observation (state) length (multiplied by 2 to account for complex nature)
 % Action length (number of reflecting elements + size of BS beamforming matrix)
@@ -94,19 +95,16 @@ obs_len = transmit_pow_len + receive_pow_len + act_len + chan_obs_len;
 obs_lower_lim = -Inf;
 obs_upper_lim =  Inf;
 obsInfo = rlNumericSpec(obs_len, 'LowerLimit', obs_lower_lim, 'UpperLimit',obs_upper_lim);
-%obsInfo.Name = 'observation';
-%obsInfo.Description = 'instantaneously observed channels';
+obsInfo.Name = 'observation';
+obsInfo.Description = 'instantaneously observed channels';
 
 % Action Specification
 act_lower_lim = -Inf;
 act_upper_lim =  Inf; % revise limits later for reflection coefficients
 actInfo = rlNumericSpec(act_len, 'LowerLimit', act_lower_lim, 'UpperLimit',act_upper_lim);
 
-% write stepfcn
-% write resetfcn.m
-
 % Create Environment
-MU_MISO_IRS_env = rlFunctionEnv(obsInfo,actInfo,stepfcn,resetfcn);
+MU_MISO_IRS_env = rlFunctionEnv(obsInfo,actInfo,'stepfcn','resetfcn');
 
 %% Create Learning Agent
 % https://www.mathworks.com/help/reinforcement-learning/ug/ddpg-agents.html
