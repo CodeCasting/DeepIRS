@@ -60,14 +60,22 @@ Reward = sum(log2(1+SINR));
 %IsDone = ;
 
 new_chan_index = LoggedSignals.chan_index+1;
-new_chan_obs.Ht = Ht(new_chan_index);   % check indices
-new_chan_obs.Hr = Hr(new_chan_index);   % check indices
-new_chan_obs.Hd = Hd(new_chan_index);   % check indices
+
+Hd = 1e-4/sqrt(2)*(randn(N_BS, N_users)+1i*randn(N_BS, N_users));
+Hr = 1e-2/sqrt(2)*(randn(M, N_users)+1i*randn(M, N_users));
+Ht = 1e-2/sqrt(2)*(randn(M, N_BS)+1i*randn(M, N_BS));
+
+LoggedSignals.new_chan_obs.Ht = Ht;
+LoggedSignals.new_chan_obs.Hr = Hr;
+LoggedSignals.new_chan_obs.Hd = Hd;
 
 % Update Logged Signals
 LoggedSignals.Action = action;              % Return past action
 LoggedSignals.State = observation;          % Return past state
-LoggedSignals.new_chan_obs = new_chan_obs;  % Prepare coming channel
+% new_chan_obs.Ht = Ht(new_chan_index);   % check indices
+% new_chan_obs.Hr = Hr(new_chan_index);   % check indices
+% new_chan_obs.Hd = Hd(new_chan_index);   % check indices
+%LoggedSignals.new_chan_obs = new_chan_obs;  % Prepare coming channel
 LoggedSignals.chan_index = new_chan_index;  % Store new channel index
 
 end

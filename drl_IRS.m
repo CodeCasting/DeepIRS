@@ -103,8 +103,10 @@ act_lower_lim = -Inf;
 act_upper_lim =  Inf; % revise limits later for reflection coefficients
 actInfo = rlNumericSpec(act_len, 'LowerLimit', act_lower_lim, 'UpperLimit',act_upper_lim);
 
+ResetHandle = @resetfcn(N_BS,N_users,M);
+
 % Create Environment
-MU_MISO_IRS_env = rlFunctionEnv(obsInfo,actInfo,'stepfcn','resetfcn');
+MU_MISO_IRS_env = rlFunctionEnv(obsInfo,actInfo,'stepfcn',ResetHandle);
 
 %% Create Learning Agent
 % https://www.mathworks.com/help/reinforcement-learning/ug/ddpg-agents.html
