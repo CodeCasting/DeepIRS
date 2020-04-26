@@ -1,10 +1,12 @@
-function [observation,Reward,LoggedSignals] = stepfcn(action, LoggedSignals)
+function [observation,Reward,IsDone,LoggedSignals] = stepfcn(Action, LoggedSignals)
 % https://www.mathworks.com/help/reinforcement-learning/ug/create-custom-reinforcement-learning-environment-in-matlab.html
 % https://www.mathworks.com/help/reinforcement-learning/ug/define-reward-signals.html
 
 % Input action is taken by the actor network
 % This step function calculates the new state/observation and reward
 % due to taken (input) action
+
+sigma_2 = LoggedSignals.sigma_2; % noise variance
 
 % Extract current channel from logged signals
 Ht = LoggedSignals.new_chan_obs.Ht;
@@ -16,9 +18,9 @@ M = size(Ht,1);
 N_BS = size(Ht,2);
 
 % Extract BS beamformer from taken action
-W = reshape(action(1:N_BS*N_users)+ 1i*action(N_BS*N_users+1:2*N_BS*N_users), N_BS, N_users);
+W = reshape(Action(1:N_BS*N_users)+ 1i*Action(N_BS*N_users+1:2*N_BS*N_users), N_BS, N_users);
 % Extract IRS reflection vector from taken action
-theta_vec = action(2*N_BS*N_users+1:2*N_BS*N_users+M)+ 1i*action(2*N_BS*N_users+M+1:2*(N_BS*N_users+M));
+theta_vec = Action(2*N_BS*N_users+1:2*N_BS*N_users+M)+ 1i*Action(2*N_BS*N_users+M+1:2*(N_BS*N_users+M));
 theta_mat = diag(theta_vec);
 
 % Extract past action from Logged signals
@@ -28,8 +30,8 @@ past_action = LoggedSignals.Action;
 transmit_pow = [diag(real(W)'*real(W)); diag(imag(W)'*imag(W))];
 
 % Calculate received power for each user (also stacking real and imag)
-H = Ht'*(theta_mat')*Hr + Hd;
-H_real_imag_vec = [real(H(:)); imag(H(:))];
+H_W = W'*(Ht'*(theta_mat')*Hr + Hd);
+H_real_imag_vec = [real(H_W(:)); imag(H_W(:))];
 receive_pow = H_real_imag_vec.^2; 
 
 % Channel observation
@@ -57,7 +59,8 @@ end
 
 Reward = sum(log2(1+SINR));
 
-%IsDone = ;
+% dummy for now
+IsDone = 1;
 
 new_chan_index = LoggedSignals.chan_index+1;
 
@@ -70,7 +73,7 @@ LoggedSignals.new_chan_obs.Hr = Hr;
 LoggedSignals.new_chan_obs.Hd = Hd;
 
 % Update Logged Signals
-LoggedSignals.Action = action;              % Return past action
+LoggedSignals.Action = Action;              % Return past action
 LoggedSignals.State = observation;          % Return past state
 % new_chan_obs.Ht = Ht(new_chan_index);   % check indices
 % new_chan_obs.Hr = Hr(new_chan_index);   % check indices

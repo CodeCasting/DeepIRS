@@ -12,7 +12,7 @@
 
 % The reward is the resulting sum throughput.
 
-% Both states and actions are continious here, thus using DDPG learning agent.
+% Both states and actions are continuous here, thus using DDPG learning agent.
 
 % Code written by Mohammad Galal Khafagy
 % Postdoctoral Researcher, American University in Cairo (AUC)
@@ -20,7 +20,8 @@
 
 % This paper does not take the direct link into account, but we can still 
 % take it here if we have it in the dataset
-% Channel model is a narrow-band model (frequency-flat channel fading)
+% Channel model is a narrow-band model (frequency-flat channel fading), so
+% it can be applied to an OFDM subcarrier for example
 
 % This code is using the Reinforcement Learning Toolbox of MATLAB
 disp('---------- Running DDPG --------')
@@ -72,7 +73,7 @@ act_len = 2*(M + N_BS* N_users);
 
 transmit_pow_len = 2*N_users;
 receive_pow_len = 2*N_users^2;
-obs_len = transmit_pow_len + receive_pow_len + act_len + chan_obs_len;  
+obs_len = transmit_pow_len + receive_pow_len +  chan_obs_len + act_len;  
 
 %% Create Environment
 % https://www.mathworks.com/help/reinforcement-learning/matlab-environments.html
@@ -94,19 +95,23 @@ obs_len = transmit_pow_len + receive_pow_len + act_len + chan_obs_len;
 % 4- The channels.
 obs_lower_lim = -Inf;
 obs_upper_lim =  Inf;
-obsInfo = rlNumericSpec(obs_len, 'LowerLimit', obs_lower_lim, 'UpperLimit',obs_upper_lim);
+obsInfo = rlNumericSpec([obs_len 1], 'LowerLimit', obs_lower_lim, 'UpperLimit',obs_upper_lim);
 obsInfo.Name = 'observation';
 obsInfo.Description = 'instantaneously observed channels';
 
 % Action Specification
 act_lower_lim = -Inf;
 act_upper_lim =  Inf; % revise limits later for reflection coefficients
-actInfo = rlNumericSpec(act_len, 'LowerLimit', act_lower_lim, 'UpperLimit',act_upper_lim);
+actInfo = rlNumericSpec([act_len 1], 'LowerLimit', act_lower_lim, 'UpperLimit',act_upper_lim);
+obsInfo.Name = 'Action';
 
-ResetHandle = @resetfcn(N_BS,N_users,M);
+ResetHandle = @() resetfcn(N_BS, N_users, M, sigma_2);
+StepHandle = @(action, LoggedSignals) stepfcn(action, LoggedSignals); 
 
 % Create Environment
-MU_MISO_IRS_env = rlFunctionEnv(obsInfo,actInfo,'stepfcn',ResetHandle);
+MU_MISO_IRS_env = rlFunctionEnv(obsInfo,actInfo,StepHandle,ResetHandle);
+
+% environment is validated! validateEnvironment(MU_MISO_IRS_env)
 
 %% Create Learning Agent
 % https://www.mathworks.com/help/reinforcement-learning/ug/ddpg-agents.html
@@ -139,10 +144,6 @@ actor_net = [
     % Power and Modular Normalization Layer still
     ];
 
-actor_obsInfo
-
-actor_actInfo
-
 
 % https://www.mathworks.com/help/reinforcement-learning/ref/rlrepresentationoptions.html
 actor_repOpts = rlRepresentationOptions(...
@@ -154,8 +155,8 @@ actor_repOpts = rlRepresentationOptions(...
 
 % Create actor agent
 ACTOR = rlDeterministicActorRepresentation(actor_net,...
-    actor_obsInfo,...
-    actor_actInfo,...
+    obsInfo,...
+    actInfo,...
     'Observation','channels',...
     'Action','beamformers',...
     actor_repOpts);
@@ -181,9 +182,9 @@ critic_net = [
     regressionLayer('Name','c_outReg')
     ];
 
-critic_obsInfo
+critic_obsInfo = rlNumericSpec([obs_len+act_len 1], 'LowerLimit', obs_lower_lim , 'UpperLimit',obs_upper_lim);
 
-critic_actInfo
+critic_actInfo = rlNumericSpec([1 1], 'LowerLimit', obs_lower_lim , 'UpperLimit',obs_upper_lim);
 
 critic_repOpts = rlRepresentationOptions(...
     'Optimizer',used_optmzr,...
