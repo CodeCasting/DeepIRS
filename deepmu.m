@@ -81,6 +81,19 @@ K_DL =1;
 
 sim_len = 1e2;              % Number of generated different multiuser scenarios
 
+sigma_2_dBm = -80; % Noise variance in dBm
+sigma_2 = 10^(sigma_2_dBm/10) * 1e-3; % (in Watts)
+
+% SINR target
+SINR_target_dB = 20; % Check: changing target SINR should change the transmit power (the cvx_optval objective value)
+SINR_target = 10^(SINR_target_dB/10);
+
+% Alternating optimization algorithm (Algorithm 1 in [R1])
+% Set error threshold for alternating algorithm termination
+eps_iter=1e-1;
+frac_error=1e10;    % Initialize fractional error
+obj_last = 1e3; % Initialize last objective value to a large number
+    
 %% Channel Generation
 % Using the DeepMIMO Dataset by Alkhateeb et al.
 
@@ -206,18 +219,6 @@ parfor sim_index = 1:sim_len
     ML_dataset{sim_index}.Hr = Hr;  % Store receive (2nd hop) channel
     %ML_dataset{sim_index}.user_loc = [user_loc{:}]; % Store user_locations
     
-    sigma_2_dBm = -80; % Noise variance in dBm
-    sigma_2 = 10^(sigma_2_dBm/10) * 1e-3; % (in Watts)
-    
-    % SINR target
-    SINR_target_dB = 20; % Check: changing target SINR should change the transmit power (the cvx_optval objective value)
-    SINR_target = 10^(SINR_target_dB/10);
-    
-    % Alternating optimization algorithm (Algorithm 1 in [R1])
-    % Set error threshold for alternating algorithm termination
-    eps_iter=1e-1;
-    frac_error=1e10;    % Initialize fractional error
-    obj_last = 1e3; % Initialize last objective value to a large number
     
     %disp('Running alternating optimization algorithm')
     r=1;            % iteration index
