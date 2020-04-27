@@ -91,8 +91,6 @@ SINR_target = 10^(SINR_target_dB/10);
 % Alternating optimization algorithm (Algorithm 1 in [R1])
 % Set error threshold for alternating algorithm termination
 eps_iter=1e-1;
-frac_error=1e10;    % Initialize fractional error
-obj_last = 1e3; % Initialize last objective value to a large number
     
 %% Channel Generation
 % Using the DeepMIMO Dataset by Alkhateeb et al.
@@ -204,7 +202,8 @@ parfor sim_index = 1:sim_len
 %     end
 %     Hr = [Hr{:}];
     
-    
+    frac_error=1e10;    % Initialize fractional error
+    obj_last = 1e3; % Initialize last objective value to a large number
     
     % Implement Optimization algorithm here
     

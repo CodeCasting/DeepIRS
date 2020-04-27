@@ -37,7 +37,7 @@ disp('---------- Running DDPG --------')
 
 % ---------- For Separate ACTOR/CRITIC AGENTS -----------------
 used_optmzr = 'adam';   % Used optimizer
-used_device = 'gpu';    % gpu or cpu
+used_device = 'cpu';    % gpu or cpu
 % Learning and Decay rates
 % Actor
 u_a = 1e-3;     % learning rate for training actor network update
@@ -76,6 +76,7 @@ receive_pow_len = 2*N_users^2;
 obs_len = transmit_pow_len + receive_pow_len +  chan_obs_len + act_len;  
 
 %% Create Environment
+disp('------- Creating Environment --------')
 % https://www.mathworks.com/help/reinforcement-learning/matlab-environments.html
 % https://www.mathworks.com/help/reinforcement-learning/ug/create-matlab-environments-for-reinforcement-learning.html
 % https://www.mathworks.com/help/reinforcement-learning/ug/create-custom-reinforcement-learning-environment-in-matlab.html
@@ -113,7 +114,10 @@ MU_MISO_IRS_env = rlFunctionEnv(obsInfo,actInfo,StepHandle,ResetHandle);
 
 % environment is validated! validateEnvironment(MU_MISO_IRS_env)
 
+
 %% Create Learning Agent
+disp('------- Creating DDPG Agent --------')
+
 % https://www.mathworks.com/help/reinforcement-learning/ug/ddpg-agents.html
 % A DDPG agent consists of two agents: an actor and a critic, cooperating
 % together to get a better output action
@@ -125,19 +129,19 @@ MU_MISO_IRS_env = rlFunctionEnv(obsInfo,actInfo,StepHandle,ResetHandle);
 % 1-a) Actor Network
 actor_layers = [
     % INPUT Layer
-    imageInputLayer([obs_len,1],'Name','a_input')
+    imageInputLayer([obs_len,1],'Name','a_input','Normalization','none')
     % Hidden Fully Connected Layer 1 with/without Dropout
     fullyConnectedLayer(act_len,'Name','a_fully1')
     tanhLayer('Name','a_tanh1')
     %dropoutLayer(0.5,'Name','a_dropout1')
     % Batch Normalization Layer 1
-    batchNormalizationLayer('Name','a_batchNorm1')
+    %batchNormalizationLayer('Name','a_batchNorm1')
     % Hidden Fully Connected Layer 2 with/without Dropout
     fullyConnectedLayer(4*act_len,'Name','a_fully2')
     tanhLayer('Name','a_tanh2')
     %dropoutLayer(0.5,'Name','a_dropout2')
     % Batch Normalization Layer 2
-    batchNormalizationLayer('Name','a_batchNorm2')
+    %batchNormalizationLayer('Name','a_batchNorm2')
     % OUTPUT Layer
     fullyConnectedLayer(act_len,'Name','a_output')
     regressionLayer('Name','a_outReg')
@@ -171,7 +175,7 @@ critic_net = [
     tanhLayer('Name','c_tanh1')
     %dropoutLayer(0.5,'Name','c_dropout1')
     % Batch Normalization Layer 1
-    batchNormalizationLayer('Name','c_batchNorm1')
+    %batchNormalizationLayer('Name','c_batchNorm1')
     % Hidden Fully Connected Layer 2 with/without Dropout
     fullyConnectedLayer(4*(obs_len+act_len),'Name','c_fully2')
     tanhLayer('Name','c_tanh2')
