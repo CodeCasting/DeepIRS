@@ -123,9 +123,9 @@ MU_MISO_IRS_env = rlFunctionEnv(obsInfo,actInfo,StepHandle,ResetHandle);
 % 1- Create an actor using an rlDeterministicActorRepresentation object.
 
 % 1-a) Actor Network
-actor_net = [
+actor_layers = [
     % INPUT Layer
-    imageInputLayer([obs_len,1,1],'Name','a_input')
+    imageInputLayer([obs_len,1],'Name','a_input')
     % Hidden Fully Connected Layer 1 with/without Dropout
     fullyConnectedLayer(act_len,'Name','a_fully1')
     tanhLayer('Name','a_tanh1')
@@ -144,6 +144,7 @@ actor_net = [
     % Power and Modular Normalization Layer still
     ];
 
+actor_net = layerGraph(actor_layers);
 
 % https://www.mathworks.com/help/reinforcement-learning/ref/rlrepresentationoptions.html
 actor_repOpts = rlRepresentationOptions(...
@@ -164,7 +165,7 @@ ACTOR = rlDeterministicActorRepresentation(actor_net,...
 % 1-b) Critic Network
 critic_net = [
     % INPUT Layer
-    imageInputLayer([obs_len+act_len,1,1],'Name','c_input')
+    imageInputLayer([obs_len+act_len,1],'Name','c_input')
     % Hidden Fully Connected Layer 1 with/without Dropout
     fullyConnectedLayer(obs_len+act_len,'Name','c_fully1')
     tanhLayer('Name','c_tanh1')
