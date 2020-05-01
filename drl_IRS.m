@@ -114,8 +114,7 @@ MU_MISO_IRS_env = rlFunctionEnv(obsInfo,actInfo,StepHandle,ResetHandle);
 
 % environment is validated! validateEnvironment(MU_MISO_IRS_env)
 
-
-%% Create Learning Agent
+%% Create Learning Agent (Actor and Critic)
 disp('------- Creating DDPG Agent --------')
 
 % https://www.mathworks.com/help/reinforcement-learning/ug/ddpg-agents.html

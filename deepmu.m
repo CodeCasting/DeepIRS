@@ -96,9 +96,9 @@ eps_iter=1e-1;
 % Using the DeepMIMO Dataset by Alkhateeb et al.
 
 % Select which machine the code is running on
-active_machine = 2;
+active_machine = 0;
 if active_machine == 0
-    % Personal machines
+    % Personal machine
     deepmimo_root_path= 'C:/Khafagy/DeepMIMO'; % Datasets/Large files
     code_folder = 'C:/Users/Mohammad/Google Drive (mgkhafagy@aucegypt.edu)/MATLAB Codes'; % Code stored on the cloud
 elseif active_machine == 1
