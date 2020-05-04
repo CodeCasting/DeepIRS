@@ -98,13 +98,14 @@ obs_lower_lim = -Inf;
 obs_upper_lim =  Inf;
 obsInfo = rlNumericSpec([obs_len 1], 'LowerLimit', obs_lower_lim, 'UpperLimit',obs_upper_lim);
 obsInfo.Name = 'observation';
-obsInfo.Description = 'instantaneously observed channels';
+obsInfo.Description = 'instantaneously observed channels, transmit and rec. powers, and past action';
 
 % Action Specification
 act_lower_lim = -Inf;
 act_upper_lim =  Inf; % revise limits later for reflection coefficients
-actInfo = rlNumericSpec([act_len 1], 'LowerLimit', act_lower_lim, 'UpperLimit',act_upper_lim);
-obsInfo.Name = 'Action';
+actInfo = rlNumericSpec([act_len, 1], 'LowerLimit', act_lower_lim, 'UpperLimit',act_upper_lim);
+actInfo.Name = 'action';
+actInfo.Description = 'stacked active and passive beamformers';
 
 ResetHandle = @() resetfcn(N_BS, N_users, M, sigma_2);
 StepHandle = @(action, LoggedSignals) stepfcn(action, LoggedSignals); 
@@ -115,7 +116,7 @@ MU_MISO_IRS_env = rlFunctionEnv(obsInfo,actInfo,StepHandle,ResetHandle);
 % environment is validated! validateEnvironment(MU_MISO_IRS_env)
 
 %% Create Learning Agent (Actor and Critic)
-disp('------- Creating DDPG Agent --------')
+disp('===== Creating DDPG Agent =====')
 
 % https://www.mathworks.com/help/reinforcement-learning/ug/ddpg-agents.html
 % A DDPG agent consists of two agents: an actor and a critic, cooperating
@@ -123,12 +124,12 @@ disp('------- Creating DDPG Agent --------')
 
 % ---- Whitening Process for Input Decorrelation --- NOT DONE YET
 
-% 1- Create an actor using an rlDeterministicActorRepresentation object.
-
+%% 1- Create an actor using an rlDeterministicActorRepresentation object.
+disp('------- Creating Actor --------')
 % 1-a) Actor Network
 actor_layers = [
     % INPUT Layer
-    imageInputLayer([obs_len,1],'Name','a_input','Normalization','none')
+    imageInputLayer([obs_len,1],'Name',obsInfo.Name,'Normalization','none')
     % Hidden Fully Connected Layer 1 with/without Dropout
     fullyConnectedLayer(act_len,'Name','a_fully1')
     tanhLayer('Name','a_tanh1')
@@ -142,12 +143,15 @@ actor_layers = [
     % Batch Normalization Layer 2
     %batchNormalizationLayer('Name','a_batchNorm2')
     % OUTPUT Layer
-    fullyConnectedLayer(act_len,'Name','a_output')
-    regressionLayer('Name','a_outReg')
+    fullyConnectedLayer(act_len,'Name',actInfo.Name)
+    %regressionLayer('Name',actInfo.Name)
     % Power and Modular Normalization Layer still
     ];
 
 actor_net = layerGraph(actor_layers);
+
+% plot actor network
+% plot(actor_net)
 
 % https://www.mathworks.com/help/reinforcement-learning/ref/rlrepresentationoptions.html
 actor_repOpts = rlRepresentationOptions(...
@@ -161,14 +165,31 @@ actor_repOpts = rlRepresentationOptions(...
 ACTOR = rlDeterministicActorRepresentation(actor_net,...
     obsInfo,...
     actInfo,...
-    'Observation','channels',...
-    'Action','beamformers',...
+    'Observation',obsInfo.Name,...
+    'Action',actInfo.Name,...
     actor_repOpts);
 
-% 1-b) Critic Network
-critic_net = [
-    % INPUT Layer
-    imageInputLayer([obs_len+act_len,1],'Name','c_input')
+%% 1-b) Critic Network
+% https://www.mathworks.com/help/reinforcement-learning/ref/rlqvaluerepresentation.html
+disp('------- Creating Critic --------')
+
+% observation path input layer
+obsPath = [imageInputLayer([obs_len 1 1], 'Normalization','none','Name',obsInfo.Name)
+    fullyConnectedLayer(1,'Name','obsout')];
+% action path input layers
+actPath = [imageInputLayer([act_len 1 1], 'Normalization','none','Name',actInfo.Name)
+    fullyConnectedLayer(1,'Name','actout')];
+% common path
+comPath = [additionLayer(2,'Name', 'add')
+    fullyConnectedLayer(1, 'Name', 'critic_input')];
+critic_net = addLayers(layerGraph(obsPath),actPath);
+critic_net = addLayers(critic_net,comPath);
+
+% connect layers
+critic_net = connectLayers(critic_net,'obsout','add/in1');
+critic_net = connectLayers(critic_net,'actout','add/in2');
+
+critic_layers = [
     % Hidden Fully Connected Layer 1 with/without Dropout
     fullyConnectedLayer(obs_len+act_len,'Name','c_fully1')
     tanhLayer('Name','c_tanh1')
@@ -182,13 +203,14 @@ critic_net = [
     % Batch Normalization Layer 2
     % batchNormalizationLayer('Name','c_batchNorm2')
     % OUTPUT Layer
-    fullyConnectedLayer(1,'Name','c_output')
-    regressionLayer('Name','c_outReg')
+    fullyConnectedLayer(1,'Name','q_approx')
+    %regressionLayer('Name','c_outReg')
     ];
 
-critic_obsInfo = rlNumericSpec([obs_len+act_len 1], 'LowerLimit', obs_lower_lim , 'UpperLimit',obs_upper_lim);
+critic_net = addLayers(critic_net,critic_layers);
 
-critic_actInfo = rlNumericSpec([1 1], 'LowerLimit', obs_lower_lim , 'UpperLimit',obs_upper_lim);
+% connect input and rest of layers
+critic_net = connectLayers(critic_net,'critic_input','c_fully1');
 
 critic_repOpts = rlRepresentationOptions(...
     'Optimizer',used_optmzr,...
@@ -197,22 +219,25 @@ critic_repOpts = rlRepresentationOptions(...
 % yet to define the decay rate and differentiate between target and actual
 % networks
 
-
 % Create critic agent
 CRITIC = rlQValueRepresentation(critic_net,...
-    critic_obsInfo,...
-    critic_actInfo,...
-    'Observation','states_actions',...
-    'Action','Q_approx',...
+    obsInfo,...
+    actInfo,...
+    'Observation',obsInfo.Name,...
+    'Action',actInfo.Name,...
     critic_repOpts);
 
+% plot(critic_net)
+
 %% 3- Specify DDPG Agent options
+disp('------- Specifying DDPG Agent Options --------')
 DDPG_agent_OPTIONS =    rlDDPGAgentOptions('DiscountFactor',gam, ...
     'ExperienceBufferLength',D,...
     'MiniBatchSize', W_exp,...
     'TargetUpdateFrequency', U);
 
 %% 4- Create DDPG agent
+disp('------- Creating DDPG Agent --------')
 % https://www.mathworks.com/help/reinforcement-learning/ref/rlddpgagent.html
 DDPG_AGENT = rlDDPGAgent(ACTOR,CRITIC,DDPG_agent_OPTIONS);
 
