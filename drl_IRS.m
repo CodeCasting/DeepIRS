@@ -175,10 +175,12 @@ disp('------- Creating Critic --------')
 
 % observation path input layer
 obsPath = [imageInputLayer([obs_len 1 1], 'Normalization','none','Name',obsInfo.Name)
-    fullyConnectedLayer(1,'Name','obsout')];
+    fullyConnectedLayer(1,'Name','obsout')
+    ];
 % action path input layers
 actPath = [imageInputLayer([act_len 1 1], 'Normalization','none','Name',actInfo.Name)
-    fullyConnectedLayer(1,'Name','actout')];
+    fullyConnectedLayer(1,'Name','actout')
+    ];
 % common path
 comPath = [additionLayer(2,'Name', 'add')
     fullyConnectedLayer(1, 'Name', 'critic_input')];
@@ -249,8 +251,7 @@ DDPG_AGENT = rlDDPGAgent(ACTOR,CRITIC,DDPG_agent_OPTIONS);
 DDPG_train_options = rlTrainingOptions(...
     'MaxEpisodes',N_epis,...
     'MaxStepsPerEpisode',T,...
-    'UseParallel', true,...
-    'Parallelization', 'async',...
+    'UseParallel', true,...%'Parallelization', 'async',...
     'Verbose', true,...
     'Plots', 'training-progress');
     
@@ -288,3 +289,13 @@ trainStats = train(DDPG_AGENT,...           % Agent
 %         % Set input to DNN as s(t+1)
 %         end
 %     end
+
+%% Figures 
+% Plot Actor and Critic Neural Networks
+figure(1)
+subplot(1,2,1)
+plot(actor_net)
+title('Actor Network')
+subplot(1,2,2)
+plot(critic_net)
+title('Critic Network')
