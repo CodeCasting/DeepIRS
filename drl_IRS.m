@@ -206,7 +206,7 @@ critic_layers = [
     % batchNormalizationLayer('Name','c_batchNorm2')
     % OUTPUT Layer
     fullyConnectedLayer(1,'Name','q_approx')
-    %regressionLayer('Name','c_outReg')
+    regressionLayer('Name','c_outReg')
     ];
 
 critic_net = addLayers(critic_net,critic_layers);
