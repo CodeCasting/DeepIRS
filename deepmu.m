@@ -176,6 +176,11 @@ for pp = 1:1:numel(Ur_rows_grid)-1          % loop for Normalizing H
 end
 clear Delta_H
 
+
+
+%% Create and Train DDPG AGENT
+drl_IRS
+
 %% Loop over different user permutations and store optimized solutions
 tic
 ML_dataset{sim_len} = {}; % Store channels, locations, and solutions
@@ -185,8 +190,9 @@ user_loc{N_users} = {};
 rng(1);
 
 myCluster = parcluster();
+if isempty(gcp)
 myPool = parpool(myCluster);
-
+end
 
 disp('Looping over different multi-user patterns and generating optimized matrices')
 parfor sim_index = 1:sim_len

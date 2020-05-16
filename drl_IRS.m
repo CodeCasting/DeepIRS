@@ -144,8 +144,9 @@ actor_layers = [
     %batchNormalizationLayer('Name','a_batchNorm2')
     % OUTPUT Layer
     fullyConnectedLayer(act_len,'Name',actInfo.Name)
-    %regressionLayer('Name',actInfo.Name)
+    regressionLayer('Name','a_reg_o')
     % Power and Modular Normalization Layer still
+    %scalingLayer
     ];
 
 actor_net = layerGraph(actor_layers);
@@ -254,13 +255,16 @@ DDPG_train_options = rlTrainingOptions(...
     'UseParallel', true,...%'Parallelization', 'async',...
     'Verbose', true,...
     'Plots', 'training-progress');
-    
+
+% DDPG_train_options.ParallelizationOptions.Mode = 
     
 % Train DDPG Agent    
 trainStats = train(DDPG_AGENT,...           % Agent
                    MU_MISO_IRS_env,...      % Environment
                    DDPG_train_options);     % Training Options
 
+% Terminate parallel session
+delete(gcp('nocreate'))
 
 %  % Write Algorithm 1 in paper, then annotate how the MATLAB commands
 %  % summarize it 
