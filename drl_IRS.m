@@ -146,7 +146,7 @@ actor_layers = [
     fullyConnectedLayer(act_len,'Name',actInfo.Name)
     regressionLayer('Name','a_reg_o')
     % Power and Modular Normalization Layer still
-    %scalingLayer
+    % scalingLayer
     ];
 
 actor_net = layerGraph(actor_layers);

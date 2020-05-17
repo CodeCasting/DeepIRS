@@ -469,5 +469,3 @@ toc
 % Power Consumption
 
 % Time/Complexity
-
-

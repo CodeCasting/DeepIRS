@@ -57,6 +57,7 @@ for  user_ind = 1 : N_users
     SINR(user_ind) = norm(desired,2)^2/norm(interf,2)^2;
 end
 
+
 Reward = sum(log2(1+SINR));
 
 % dummy for now
