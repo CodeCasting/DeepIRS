@@ -176,8 +176,6 @@ for pp = 1:1:numel(Ur_rows_grid)-1          % loop for Normalizing H
 end
 clear Delta_H
 
-
-
 %% Create and Train DDPG AGENT
 drl_IRS
 
@@ -349,7 +347,6 @@ delete(gcp('nocreate'))
 
 save([deepmimo_root_path '/saved_datasets.mat'], 'ML_dataset')
 disp(['Elapsed time = ' num2str(toc/60) ' minutes.'])
-
 
 %% Build Neural Network here
 
