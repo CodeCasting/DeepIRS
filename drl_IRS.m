@@ -303,3 +303,4 @@ title('Actor Network')
 subplot(1,2,2)
 plot(critic_net)
 title('Critic Network')
+figure
