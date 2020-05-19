@@ -3,6 +3,7 @@ function [W, tau, INTERFERENCE, cvx_status, cvx_optval] = iter_opt_prob_1(H,sigm
 N_BS = size(H,1);
 N_users = size(H,2);
 
+%cvx_begin
 %cvx_clear
 %clear W tau INTERFERENCE cvx_optval
 

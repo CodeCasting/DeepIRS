@@ -36,7 +36,7 @@ N_BS = 6;                   % Number of BS antennas
 %Pt = 100;                   % Transmit power in dBm
 
 % ----------- Users -----------
-N_users= 2;                 % Number of Users
+N_users= 3;                 % Number of Users
 % Users will be randomized from the following region (between the following rows)
 % each row contains 181 possible user locations
 Ur_rows = [1000 1300];      % user Ur rows
@@ -181,19 +181,21 @@ drl_IRS
 
 %% Loop over different user permutations and store optimized solutions
 tic
+%clear H W 
+
 ML_dataset{sim_len} = {}; % Store channels, locations, and solutions
 user_loc{N_users} = {};
 
 % Fix seed
 rng(1);
 
-myCluster = parcluster();
-if isempty(gcp)
-    myPool = parpool(myCluster);
-end
+% myCluster = parcluster();
+% if isempty(gcp)
+%     myPool = parpool(myCluster);
+% end
 
 disp('Looping over different multi-user patterns and generating optimized matrices')
-parfor sim_index = 1:sim_len
+for sim_index = 1:sim_len
     disp(['=== User pattern ' num2str(sim_index) ' out of ' num2str(sim_len) ' ====='])
     
     % Select N_users random user indices
