@@ -91,7 +91,7 @@ SINR_target = 10^(SINR_target_dB/10);
 % Alternating optimization algorithm (Algorithm 1 in [R1])
 % Set error threshold for alternating algorithm termination
 eps_iter=1e-1;
-    
+
 %% Channel Generation
 % Using the DeepMIMO Dataset by Alkhateeb et al.
 
@@ -108,7 +108,7 @@ elseif active_machine == 1
 elseif active_machine == 2
     % Research Lab Linux Workstation
     deepmimo_root_path= '/home/khafagy/Storage/DeepMIMO';
-    code_folder = '/home/khafagy/Storage/git/DeepIRS'; 
+    code_folder = '/home/khafagy/Storage/git/DeepIRS';
 end
 cd(code_folder)
 
@@ -189,7 +189,7 @@ rng(1);
 
 myCluster = parcluster();
 if isempty(gcp)
-myPool = parpool(myCluster);
+    myPool = parpool(myCluster);
 end
 
 disp('Looping over different multi-user patterns and generating optimized matrices')
@@ -197,14 +197,14 @@ parfor sim_index = 1:sim_len
     disp(['=== User pattern ' num2str(sim_index) ' out of ' num2str(sim_len) ' ====='])
     
     % Select N_users random user indices
-%     clear Hr
-%     Hr{N_users} = [];
-%     users = randperm(params.num_user, N_users);
-%     for user_ind = 1:N_users
-%         Hr{user_ind} = DeepMIMO_dataset{1}.user{users(user_ind)}.channel;
-%         %user_loc{user_ind} = DeepMIMO_dataset{1}.user{users(user_ind)}.loc;
-%     end
-%     Hr = [Hr{:}];
+    %     clear Hr
+    %     Hr{N_users} = [];
+    %     users = randperm(params.num_user, N_users);
+    %     for user_ind = 1:N_users
+    %         Hr{user_ind} = DeepMIMO_dataset{1}.user{users(user_ind)}.channel;
+    %         %user_loc{user_ind} = DeepMIMO_dataset{1}.user{users(user_ind)}.loc;
+    %     end
+    %     Hr = [Hr{:}];
     
     frac_error=1e10;    % Initialize fractional error
     obj_last = 1e3; % Initialize last objective value to a large number
@@ -216,7 +216,7 @@ parfor sim_index = 1:sim_len
     Hd = 1e-4/sqrt(2)*(randn(N_BS, N_users)+1i*randn(N_BS, N_users));
     Hr = 1e-2/sqrt(2)*(randn(M, N_users)+1i*randn(M, N_users));
     Ht = 1e-2/sqrt(2)*(randn(M, N_BS)+1i*randn(M, N_BS));
-
+    
     ML_dataset{sim_index}.Ht = Ht; % Store transmit (1st hop) channel
     ML_dataset{sim_index}.Hd = Hd;  % Store direct channel
     ML_dataset{sim_index}.Hr = Hr;  % Store receive (2nd hop) channel
@@ -248,7 +248,7 @@ parfor sim_index = 1:sim_len
         end
         
         H = Ht'*(theta_mat')*Hr + Hd;
-
+        
         % ==== Optimize W while fixing theta ==== BS Transmit Beamforming
         %disp('Active Beamformer Design')
         
@@ -260,22 +260,22 @@ parfor sim_index = 1:sim_len
         end
         %disp(['CVX Status: ' cvx_status ', CVX_optval = ' num2str(10*log10(cvx_optval*1000)) ' dBm'])
         %disp(['CVX Status: ' cvx_status ', CVX_optval = ' num2str(10*log10(trace(W'*W)*1000)) ' dBm'])
-
+        
         frac_error = abs(obj_last - cvx_optval)/obj_last *100;
         obj_last = cvx_optval;
         
         achieved_SINR = zeros(1,N_users);
-        % Actual achieved SINR 
+        % Actual achieved SINR
         for k = all_users
-        achieved_SINR(k) = (norm((H(:,k)')*W(:,k)))^2/(norm(INTERFERENCE(:,k)))^2;
+            achieved_SINR(k) = (norm((H(:,k)')*W(:,k)))^2/(norm(INTERFERENCE(:,k)))^2;
         end
-
+        
         
         % ==== Optimize theta while fixing W ==== IRS Reflection Matrix
         % (P4') in paper
         %disp('Passive Beamformer Design')
         
-       [V, a_aux, a, b, R, desired, interference, SINR_CONSTR, cvx_status, cvx_optval] = iter_opt_prob_2(W, Ht,Hr,Hd,sigma_2,SINR_target,int_users_matrix);
+        [V, a_aux, a, b, R, desired, interference, SINR_CONSTR, cvx_status, cvx_optval] = iter_opt_prob_2(W, Ht,Hr,Hd,sigma_2,SINR_target,int_users_matrix);
         
         %disp(['CVX Status: ' cvx_status])
         
@@ -297,7 +297,7 @@ parfor sim_index = 1:sim_len
                 %reset(gpudev);
                 r_vec_matrix = (1/sqrt(2))*((mvnrnd(zeros(M+1,1),eye(M+1),num_rands) + 1i * mvnrnd(zeros(M+1,1),eye(M+1), num_rands)).'); %gpuArray()
                 v_bar_matrix = U*sqrt(D)*r_vec_matrix;
-                 
+                
                 best_index = 0;
                 best_value = -1e8;
                 %v_bar_matrix = exp(1i*2*pi*rand(M+1,num_rands));
@@ -305,7 +305,7 @@ parfor sim_index = 1:sim_len
                 for randmzn_index = 1:num_rands
                     v_bar_vec = v_bar_matrix(:,randmzn_index);
                     V_rand = v_bar_vec*(v_bar_vec');
-                                        
+                    
                     [~, ~, constr_value] = sinr_CONSTRAINT(V_rand, b, R, SINR_target, sigma_2, all_users, int_users_matrix);
                     
                     % Check feasibility and best value
@@ -341,6 +341,13 @@ parfor sim_index = 1:sim_len
     
     % ----------- end iterative algorithm ------------------
     
+    
+    
+    % Get DRL Solution
+    chan_obs =  [  real(Ht(:)); imag(Ht(:));
+        real(Hr(:)); imag(Hr(:));
+        real(Hd(:)); imag(Hd(:))];
+    ML_dataset{sim_index}.DRL_solution = DDPG_AGENT.getAction(chan_obs);
 end
 
 delete(gcp('nocreate'))
