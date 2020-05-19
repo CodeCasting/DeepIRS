@@ -53,7 +53,7 @@ t_c = 1e-3;     % learning rate for target critic network update
 % ------------- Created DDPG AGENT Options -------------------
 D = 1e5;        % Length of replay experience memory window
 W_exp = 16;     % Number of experiences in the mini-batch
-gam = 0.99;     % Discount factor
+gam = 0.001;        % Discount factor
 U = 1;          % Number of steps synchronizing target with training network
 
 % ------------- For DDPG AGENT Training ----------------------
@@ -73,7 +73,7 @@ act_len = 2*(M + N_BS* N_users);
 
 transmit_pow_len = 2*N_users;
 receive_pow_len = 2*N_users^2;
-obs_len = transmit_pow_len + receive_pow_len +  chan_obs_len + act_len;  
+obs_len = chan_obs_len;%transmit_pow_len + receive_pow_len +  chan_obs_len + act_len;  
 
 %% Create Environment
 disp('------- Creating Environment --------')
@@ -107,8 +107,8 @@ actInfo = rlNumericSpec([act_len, 1], 'LowerLimit', act_lower_lim, 'UpperLimit',
 actInfo.Name = 'action';
 actInfo.Description = 'stacked active and passive beamformers';
 
-ResetHandle = @() resetfcn(N_BS, N_users, M, sigma_2);
-StepHandle = @(action, LoggedSignals) stepfcn(action, LoggedSignals); 
+ResetHandle = @() resetfcn_power(N_BS, N_users, M, sigma_2, SINR_target);
+StepHandle = @(action, LoggedSignals) stepfcn_power(action, LoggedSignals); 
 
 % Create Environment
 MU_MISO_IRS_env = rlFunctionEnv(obsInfo,actInfo,StepHandle,ResetHandle);

@@ -1,4 +1,4 @@
-function [observation,Reward,IsDone,LoggedSignals] = stepfcn(Action, LoggedSignals)
+function [observation,Reward,IsDone,LoggedSignals] = stepfcn_power(Action, LoggedSignals)
 % https://www.mathworks.com/help/reinforcement-learning/ug/create-custom-reinforcement-learning-environment-in-matlab.html
 % https://www.mathworks.com/help/reinforcement-learning/ug/define-reward-signals.html
 
@@ -39,11 +39,13 @@ chan_obs =  [  real(Ht(:)); imag(Ht(:));
                real(Hr(:)); imag(Hr(:));
                real(Hd(:)); imag(Hd(:))];
 
-observation = [transmit_pow; 
-               receive_pow;
-               chan_obs;
-               past_action];
+% observation = [transmit_pow; 
+%                receive_pow;
+%                chan_obs;
+%                past_action];
 
+observation = chan_obs;
+            
 int_users_matrix = LoggedSignals.int_users_matrix;
 
 % Calculate and return reward
@@ -57,9 +59,11 @@ for  user_ind = 1 : N_users
     SINR(user_ind) = norm(desired,2)^2/norm(interf,2)^2;
 end
 
-
-Reward = sum(log2(1+SINR));
-
+if min(SINR)>LoggedSignals.SINR_threshold
+    Reward = 1/sum(transmit_pow);
+else
+    Reward = -1;
+end
 % dummy for now
 IsDone = 1;
 
