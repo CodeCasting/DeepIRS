@@ -1,4 +1,4 @@
-function [observation,Reward,IsDone,LoggedSignals] = stepfcn(Action, LoggedSignals)
+function [observation,Reward,IsDone,LoggedSignals] = stepfcn_throughput(Action, LoggedSignals)
 % https://www.mathworks.com/help/reinforcement-learning/ug/create-custom-reinforcement-learning-environment-in-matlab.html
 % https://www.mathworks.com/help/reinforcement-learning/ug/define-reward-signals.html
 

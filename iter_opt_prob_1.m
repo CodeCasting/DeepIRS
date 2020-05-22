@@ -4,18 +4,18 @@ N_BS = size(H,1);
 N_users = size(H,2);
 
 %cvx_begin
-%cvx_clear
-%clear W tau INTERFERENCE cvx_optval
+cvx_clear
+clear W tau INTERFERENCE cvx_optval
 
 cvx_begin
 cvx_quiet(true)
-cvx_solver SDPT3 %SDPT3  %Mosek     % Choose the underlying solver
+cvx_solver sedumi %SDPT3  %Mosek     % Choose the underlying solver
 cvx_precision best        % Change the cvx numerical precision
 
 % Define your optimization variables here
 variable W(N_BS,N_users) complex; % add the word binary for binary constraints - see CVX documentation for more options
 variable tau nonnegative; % Auxiliary variable
-expressions INTERFERENCE(N_users,N_users);
+expression INTERFERENCE(N_users,N_users);
 
 all_users = 1:N_users;
 

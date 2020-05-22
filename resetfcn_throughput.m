@@ -1,7 +1,7 @@
 % Reset function for the MU-MISO IRS environment
 % https://www.mathworks.com/help/reinforcement-learning/ug/create-custom-reinforcement-learning-environment-in-matlab.html
 
-function [InitialObservation,LoggedSignals] = resetfcn(N_BS, N_users, M, sigma_2)
+function [InitialObservation,LoggedSignals] = resetfcn_throughput(N_BS, N_users, M, sigma_2)
 
 
 % Initialize Channel Index to 1

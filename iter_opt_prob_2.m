@@ -21,6 +21,8 @@ all_users = 1:N_users;
             end
         end
         
+        cvx_clear
+        
         cvx_begin sdp
         cvx_quiet(true)
         cvx_solver SDPT3 %SeDuMi %SDPT3  %Mosek     % Choose the underlying solver
