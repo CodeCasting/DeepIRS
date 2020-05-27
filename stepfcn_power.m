@@ -39,12 +39,10 @@ chan_obs =  [  real(Ht(:)); imag(Ht(:));
                real(Hr(:)); imag(Hr(:));
                real(Hd(:)); imag(Hd(:))];
 
-% observation = [transmit_pow; 
-%                receive_pow;
-%                chan_obs;
-%                past_action];
+observation = [transmit_pow; receive_pow; chan_obs; Action];
 
-observation = chan_obs;
+
+% observation = chan_obs;
             
 int_users_matrix = LoggedSignals.int_users_matrix;
 

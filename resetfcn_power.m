@@ -44,7 +44,7 @@ chan_obs =  [  real(Ht(:)); imag(Ht(:));
     real(Hd(:)); imag(Hd(:))];
 
 % Return initial environment state variables as logged signals.
-LoggedSignals.State =  chan_obs; %[transmit_pow; receive_pow; chan_obs; Action];
+LoggedSignals.State =  [transmit_pow; receive_pow; chan_obs; Action];
 InitialObservation = LoggedSignals.State;
 
 all_users = 1:1:N_users;                    % vector of all user indices

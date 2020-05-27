@@ -53,7 +53,7 @@ t_c = 1e-3;     % learning rate for target critic network update
 % ------------- Created DDPG AGENT Options -------------------
 D = 1e5;        % Length of replay experience memory window
 W_exp = 16;     % Number of experiences in the mini-batch
-gam = 0.001;        % Discount factor
+gam = 0.99;        % Discount factor
 U = 1;          % Number of steps synchronizing target with training network
 
 % ------------- For DDPG AGENT Training ----------------------
@@ -73,7 +73,7 @@ act_len = 2*(M + N_BS* N_users);
 
 transmit_pow_len = 2*N_users;
 receive_pow_len = 2*N_users^2;
-obs_len = chan_obs_len;%transmit_pow_len + receive_pow_len +  chan_obs_len + act_len;  
+obs_len = chan_obs_len + transmit_pow_len + receive_pow_len + act_len;  
 
 %% Create Environment
 disp('------- Creating Environment --------')
