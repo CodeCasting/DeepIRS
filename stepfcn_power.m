@@ -58,29 +58,29 @@ end
 
 if min(SINR)>LoggedSignals.SINR_threshold
     Reward = 1/sum(transmit_pow);
+    IsDone = 1;
 else
     Reward = -1;
+    IsDone = 1; %change later
 end
-% dummy for now
-IsDone = 1;
 
-new_chan_index = LoggedSignals.chan_index+1;
+LoggedSignals.chan_index = LoggedSignals.chan_index+1;  % Store new channel index
 
 Hd = LoggedSignals.Hd_mat(:,:,LoggedSignals.chan_index);
 Hr = LoggedSignals.Hr_mat(:,:,LoggedSignals.chan_index);
 Ht = LoggedSignals.Ht_mat(:,:,LoggedSignals.chan_index);
 
+% ================DEBUGGING=============================
+Hd = 1e-4/sqrt(2)*(randn(size(Hd))+1i*randn(size(Hd)));
+Hr = 1e-2/sqrt(2)*(randn(size(Hr))+1i*randn(size(Hr)));
+Ht = 1e-2/sqrt(2)*(randn(size(Ht))+1i*randn(size(Ht)));
+
+% Update Logged Signals
 LoggedSignals.new_chan_obs.Ht = Ht;
 LoggedSignals.new_chan_obs.Hr = Hr;
 LoggedSignals.new_chan_obs.Hd = Hd;
-
-% Update Logged Signals
 LoggedSignals.Action = Action;              % Return past action
 LoggedSignals.State = new_observation;          % Return past state
-% new_chan_obs.Ht = Ht(new_chan_index);   % check indices
-% new_chan_obs.Hr = Hr(new_chan_index);   % check indices
-% new_chan_obs.Hd = Hd(new_chan_index);   % check indices
 %LoggedSignals.new_chan_obs = new_chan_obs;  % Prepare coming channel
-LoggedSignals.chan_index = new_chan_index;  % Store new channel index
 
 end

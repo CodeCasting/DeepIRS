@@ -53,11 +53,11 @@ t_c = 1e-3;     % learning rate for target critic network update
 % ------------- Created DDPG AGENT Options -------------------
 D = 1e5;        % Length of replay experience memory window
 W_exp = 16;     % Number of experiences in the mini-batch
-gam = 0.99;        % Discount factor
+gam = 0.01;        % Discount factor
 U = 1;          % Number of steps synchronizing target with training network
 
 % ------------- For DDPG AGENT Training ----------------------
-N_epis = 5e1;           % Number of episodes (changed due to DUPLICATE NAME)
+N_epis = 5e3;           % Number of episodes (changed due to DUPLICATE NAME)
 T = 2e4;                % Number of steps per episode
 
 %% Memory Preallocation
@@ -293,13 +293,3 @@ delete(gcp('nocreate'))
 %         % Set input to DNN as s(t+1)
 %         end
 %     end
-
-%% Figures 
-% Plot Actor and Critic Neural Networks
-figure(1)
-subplot(1,2,1)
-plot(actor_net)
-title('Actor Network')
-subplot(1,2,2)
-plot(critic_net)
-title('Critic Network')

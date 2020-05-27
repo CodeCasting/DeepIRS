@@ -79,13 +79,14 @@ BW = 100e6;                 % Bandwidth in Hz (ex: 100e6 --> 100 MHz)
 K=1;                          % No OFDM
 K_DL =1;
 
-sim_len = 1e2;              % Number of generated different multiuser scenarios
+T = 2e4; % number of steps per episode for training
+sim_len = 1e1;              % Number of generated different multiuser scenarios
 
 sigma_2_dBm = -80; % Noise variance in dBm
 sigma_2 = 10^(sigma_2_dBm/10) * 1e-3; % (in Watts)
 
 % SINR target
-SINR_target_dB = 20; % Check: changing target SINR should change the transmit power (the cvx_optval objective value)
+SINR_target_dB = 5; % Check: changing target SINR should change the transmit power (the cvx_optval objective value)
 SINR_target = 10^(SINR_target_dB/10);
 
 % Alternating optimization algorithm (Algorithm 1 in [R1])
@@ -177,9 +178,9 @@ eps_iter=1e-1;
 % clear Delta_H
 
 %% Pregenerate randomly and store channels for now for all sim_len (replace with DeepMIMO channels later when available)
-Hd_mat = 1e-4/sqrt(2)*(randn(N_BS, N_users, sim_len)+1i*randn(N_BS, N_users, sim_len));
-Hr_mat = 1e-2/sqrt(2)*(randn(M, N_users, sim_len)+1i*randn(M, N_users, sim_len));
-Ht_mat = 1e-2/sqrt(2)*(randn(M, N_BS, sim_len)+1i*randn(M, N_BS, sim_len));
+Hd_mat = 1e-4/sqrt(2)*(randn(N_BS, N_users, T)+1i*randn(N_BS, N_users, T));
+Hr_mat = 1e-2/sqrt(2)*(randn(M, N_users, T)+1i*randn(M, N_users, T));
+Ht_mat = 1e-2/sqrt(2)*(randn(M, N_BS, T)+1i*randn(M, N_BS, T));
 
 %% Create and Train DDPG AGENT
 drl_IRS
@@ -237,7 +238,7 @@ parfor sim_index = 1:sim_len
     
     %% Alternating Optimization
     %disp('Running alternating optimization algorithm')
-    % r=1;            % iteration index
+    r=1;            % iteration index
     % Initialize reflection matrix theta
     beta_vec = ones(M,1);               % Fixed to 1 for now as in the paper
     theta_vec = 2*pi*rand(M,1);          % Uniformly randomized from 0 to 2*pi
@@ -345,13 +346,13 @@ parfor sim_index = 1:sim_len
         end
         
         %     % Increment iteration index
-        %     r = r+1;
+        r = r+1;
     end
     
     %%
     ML_dataset{sim_index}.W = W;  % Store Transmit Beamformer
     ML_dataset{sim_index}.theta = diag(theta_mat);  % Store Reflection Matrix Diagonal
-    %ML_dataset{sim_index}.iterations = r-1;
+    ML_dataset{sim_index}.iterations = r-1;
     
     % ----------- end iterative algorithm ------------------
     
@@ -369,27 +370,28 @@ disp(['Elapsed time = ' num2str(toc/60) ' minutes.'])
 
 %% Build Neural Network here
 
-% For regression neural network, we can directly use newgrnn
-tic
-% Prepare INPUT and OUTPUT matrices
-INPUT = zeros(sim_len,2*(M * N_users + M * N_BS + N_BS* N_users)); % The 3 vectorized channel matrices
-OUTPUT = zeros(sim_len, 2*(M + N_BS* N_users)); % Vectorized beamformers
-iterations = zeros(sim_len,1);
-% Generalized Regression Neural Networks in MATLAB
-for loop_index = 1:sim_len
-    TEMP = ML_dataset{loop_index};
-    INPUT(loop_index,:)  = [real(TEMP.Ht(:)); imag(TEMP.Ht(:));
-        real(TEMP.Hr(:)); imag(TEMP.Hr(:));
-        real(TEMP.Hd(:)); imag(TEMP.Hd(:))].';
-    OUTPUT(loop_index,:) = [real(TEMP.W(:)); imag(TEMP.W(:));
-        real(TEMP.theta(:)); imag(TEMP.theta(:))].';
-    iterations(loop_index) = TEMP.iterations;
-end
+% % For regression neural network, we can directly use newgrnn
+% tic
+% % Prepare INPUT and OUTPUT matrices
+% INPUT = zeros(sim_len,2*(M * N_users + M * N_BS + N_BS* N_users)); % The 3 vectorized channel matrices
+% OUTPUT = zeros(sim_len, 2*(M + N_BS* N_users)); % Vectorized beamformers
+% iterations = zeros(sim_len,1);
+% % Generalized Regression Neural Networks in MATLAB
+% for loop_index = 1:sim_len
+%     TEMP = ML_dataset{loop_index};
+%     INPUT(loop_index,:)  = [real(TEMP.Ht(:)); imag(TEMP.Ht(:));
+%         real(TEMP.Hr(:)); imag(TEMP.Hr(:));
+%         real(TEMP.Hd(:)); imag(TEMP.Hd(:))].';
+%     OUTPUT(loop_index,:) = [real(TEMP.W(:)); imag(TEMP.W(:));
+%         real(TEMP.theta(:)); imag(TEMP.theta(:))].';
+%     iterations(loop_index) = TEMP.iterations;
+% end
+%
+% net = newgrnn(INPUT.',OUTPUT.');
+% y = net(INPUT.').';
+%
+% toc
 
-net = newgrnn(INPUT.',OUTPUT.');
-y = net(INPUT.').';
-
-toc
 % Training_Size=[2  1e4*(1:.4:3)];        % Training Dataset Size vector
 % % Should be made a function of sim_len: the size of our stored optimized
 % % data, which will be split into training, testing, and validation
@@ -485,6 +487,85 @@ toc
 % end
 
 %% Plot Figures
+close all
+
+
+% Plot Actor and Critic Neural Networks
+figure(1)
+subplot(1,2,1)
+plot(actor_net)
+title('Actor Network')
+subplot(1,2,2)
+plot(critic_net)
+title('Critic Network')
+
+% Prelim calculations for figures
+
+SINR_DRL = zeros(N_users,sim_len);
+SINR_OPT = zeros(N_users,sim_len);
+transmit_pow_DRL = zeros(sim_len,1);
+transmit_pow_OPT = zeros(sim_len,1);
+
+for sim_ind = 1:sim_len
+    Ht = ML_dataset{sim_ind}.Ht;
+    Hd = ML_dataset{sim_ind}.Hd;
+    Hr = ML_dataset{sim_ind}.Hr;
+    Action = ML_dataset{sim_ind}.DRL_solution;
+    % Extract BS beamformer from taken action
+    W_DRL = reshape(Action(1:N_BS*N_users)+ 1i*Action(N_BS*N_users+1:2*N_BS*N_users), N_BS, N_users);
+    % Extract IRS reflection vector from taken action
+    theta_vec_DRL = Action(2*N_BS*N_users+1:2*N_BS*N_users+M)+ 1i*Action(2*N_BS*N_users+M+1:2*(N_BS*N_users+M));
+    theta_mat_DRL = diag(theta_vec_DRL);
+    H_DRL = Ht'*(theta_mat_DRL')*Hr + Hd;
+    
+    W_OPT = ML_dataset{sim_ind}.W;
+    theta_vec_OPT = ML_dataset{sim_ind}.theta;
+    theta_mat_OPT = diag(theta_vec_OPT);
+    
+    H_OPT = Ht'*(theta_mat_OPT')*Hr + Hd;
+    
+    transmit_pow_DRL(sim_ind) = sum([diag(real(W_DRL)'*real(W_DRL)); diag(imag(W_DRL)'*imag(W_DRL))]);
+    transmit_pow_OPT(sim_ind) = sum([diag(real(W_OPT)'*real(W_OPT)); diag(imag(W_OPT)'*imag(W_OPT))]);
+    
+    
+    for  user_ind = 1 : N_users
+        int_users = int_users_matrix(user_ind,:); % interfering user indices
+        % DRL
+        desired_DRL = W_DRL(:,user_ind)'*H_DRL(:,user_ind);
+        interf_DRL = [W_DRL(:,int_users)'*H_DRL(:,user_ind); sqrt(sigma_2)];
+        SINR_DRL(user_ind,sim_ind) = norm(desired_DRL,2)^2/norm(interf_DRL,2)^2;
+        
+        % OPT
+        desired_OPT = W_OPT(:,user_ind)'*H_OPT(:,user_ind);
+        interf_OPT = [W_OPT(:,int_users)'*H_OPT(:,user_ind); sqrt(sigma_2)];
+        SINR_OPT(user_ind,sim_ind) = norm(desired_OPT,2)^2/norm(interf_OPT,2)^2;
+    end
+end
+
+min_SINR_DRL = min(SINR_DRL,[],1);
+min_SINR_OPT = min(SINR_OPT,[],1);
+
+% Min SINR compared to threshold vs. simulation index
+figure(2)
+plot(1:sim_len, SINR_target*ones(1,sim_len), 'r-')
+title('Minimum SINR achieved for all users')
+xlabel('Simulation Index')
+ylabel('Minimum SINR')
+hold on
+plot(1:sim_len, min_SINR_DRL, 'b-')
+plot(1:sim_len, min_SINR_OPT, 'k-')
+
+legend('Threshold', 'DRL', 'Alternating Opt.')
+
 % Power Consumption
+figure(3)
+title('BS Transmit Power')
+xlabel('Simulation Index')
+ylabel('Transmit Power (W)')
+hold on
+plot(1:sim_len, transmit_pow_DRL, 'b-')
+plot(1:sim_len, transmit_pow_OPT, 'k-')
+
+legend('DRL', 'Alternating Opt.')
 
 % Time/Complexity
