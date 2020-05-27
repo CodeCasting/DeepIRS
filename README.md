@@ -1,7 +1,7 @@
 # DeepIRS
 A repository for the DeepIRS project codes
 
-deepmu.m is the main file (standing for deep multi-user)
+main_deepIRS.m is the main file (standing for deep multi-user)
 
 You can run it in MATLAB in a cell-by-cell fashion.
 
