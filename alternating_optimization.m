@@ -1,5 +1,5 @@
 %disp('Running alternating optimization algorithm')
-r=1;            % iteration index
+% r=1;            % iteration index
 % Initialize reflection matrix theta
 beta_vec = ones(M,1);               % Fixed to 1 for now as in the paper
 theta_vec = 2*pi*rand(M,1);          % Uniformly randomized from 0 to 2*pi
@@ -18,9 +18,9 @@ end
 cvx_status = 'nothing'; % initialize
 
 while (frac_error > eps_iter)  && ~contains(cvx_status,'Infeasible','IgnoreCase',true)
-    if mod(r,1e2)==0
-        %disp(['Iteration r =' num2str(r)])
-    end
+%     if mod(r,1e2)==0
+%         %disp(['Iteration r =' num2str(r)])
+%     end
     
     H = Ht'*(theta_mat')*Hr + Hd;
     
@@ -106,6 +106,6 @@ while (frac_error > eps_iter)  && ~contains(cvx_status,'Infeasible','IgnoreCase'
         end
     end
     
-    % Increment iteration index
-    r = r+1;
+%     % Increment iteration index
+%     r = r+1;
 end

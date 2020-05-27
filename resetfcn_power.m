@@ -1,16 +1,25 @@
 % Reset function for the MU-MISO IRS environment
 % https://www.mathworks.com/help/reinforcement-learning/ug/create-custom-reinforcement-learning-environment-in-matlab.html
 
-function [InitialObservation,LoggedSignals] = resetfcn_power(N_BS, N_users, M, sigma_2, SINR_threshold)
+function [InitialObservation,LoggedSignals] = resetfcn_power(Hd_mat, Hr_mat, Ht_mat, sigma_2, SINR_threshold)
 
 
 % Initialize Channel Index to 1
 LoggedSignals.chan_index = 1;       % Store new channel index
-% Prepare first channels
 
-Hd = 1e-4/sqrt(2)*(randn(N_BS, N_users)+1i*randn(N_BS, N_users));
-Hr = 1e-2/sqrt(2)*(randn(M, N_users)+1i*randn(M, N_users));
-Ht = 1e-2/sqrt(2)*(randn(M, N_BS)+1i*randn(M, N_BS));
+% Store channels
+LoggedSignals.Hd_mat = Hd_mat;
+LoggedSignals.Hr_mat = Hr_mat;
+LoggedSignals.Ht_mat = Ht_mat;
+
+% Prepare first channels
+Hd = LoggedSignals.Hd_mat(:,:,LoggedSignals.chan_index);
+Hr = LoggedSignals.Hr_mat(:,:,LoggedSignals.chan_index);
+Ht = LoggedSignals.Ht_mat(:,:,LoggedSignals.chan_index);
+
+N_users = size(Hr,2);
+M = size(Ht,1);
+N_BS = size(Ht,2);
 
 LoggedSignals.new_chan_obs.Ht = Ht;
 LoggedSignals.new_chan_obs.Hr = Hr;
@@ -44,7 +53,7 @@ chan_obs =  [  real(Ht(:)); imag(Ht(:));
     real(Hd(:)); imag(Hd(:))];
 
 % Return initial environment state variables as logged signals.
-LoggedSignals.State =  [transmit_pow; receive_pow; chan_obs; Action];
+LoggedSignals.State =  chan_obs;; %[transmit_pow; receive_pow; chan_obs; Action];
 InitialObservation = LoggedSignals.State;
 
 all_users = 1:1:N_users;                    % vector of all user indices

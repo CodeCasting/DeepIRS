@@ -1,4 +1,4 @@
-function [observation,Reward,IsDone,LoggedSignals] = stepfcn_power(Action, LoggedSignals)
+function [new_observation,Reward,IsDone,LoggedSignals] = stepfcn_power(Action, LoggedSignals)
 % https://www.mathworks.com/help/reinforcement-learning/ug/create-custom-reinforcement-learning-environment-in-matlab.html
 % https://www.mathworks.com/help/reinforcement-learning/ug/define-reward-signals.html
 
@@ -39,10 +39,9 @@ chan_obs =  [  real(Ht(:)); imag(Ht(:));
                real(Hr(:)); imag(Hr(:));
                real(Hd(:)); imag(Hd(:))];
 
-observation = [transmit_pow; receive_pow; chan_obs; Action];
+%observation = [transmit_pow; receive_pow; chan_obs; Action];
 
-
-% observation = chan_obs;
+new_observation = chan_obs;
             
 int_users_matrix = LoggedSignals.int_users_matrix;
 
@@ -67,9 +66,9 @@ IsDone = 1;
 
 new_chan_index = LoggedSignals.chan_index+1;
 
-Hd = 1e-4/sqrt(2)*(randn(N_BS, N_users)+1i*randn(N_BS, N_users));
-Hr = 1e-2/sqrt(2)*(randn(M, N_users)+1i*randn(M, N_users));
-Ht = 1e-2/sqrt(2)*(randn(M, N_BS)+1i*randn(M, N_BS));
+Hd = LoggedSignals.Hd_mat(:,:,LoggedSignals.chan_index);
+Hr = LoggedSignals.Hr_mat(:,:,LoggedSignals.chan_index);
+Ht = LoggedSignals.Ht_mat(:,:,LoggedSignals.chan_index);
 
 LoggedSignals.new_chan_obs.Ht = Ht;
 LoggedSignals.new_chan_obs.Hr = Hr;
@@ -77,7 +76,7 @@ LoggedSignals.new_chan_obs.Hd = Hd;
 
 % Update Logged Signals
 LoggedSignals.Action = Action;              % Return past action
-LoggedSignals.State = observation;          % Return past state
+LoggedSignals.State = new_observation;          % Return past state
 % new_chan_obs.Ht = Ht(new_chan_index);   % check indices
 % new_chan_obs.Hr = Hr(new_chan_index);   % check indices
 % new_chan_obs.Hd = Hd(new_chan_index);   % check indices

@@ -57,13 +57,13 @@ gam = 0.99;        % Discount factor
 U = 1;          % Number of steps synchronizing target with training network
 
 % ------------- For DDPG AGENT Training ----------------------
-N_epis = 5e3;           % Number of episodes (changed due to DUPLICATE NAME)
+N_epis = 5e1;           % Number of episodes (changed due to DUPLICATE NAME)
 T = 2e4;                % Number of steps per episode
 
 %% Memory Preallocation
-N_users = size(Hr,2);
-M = size(Ht,1);
-N_BS = size(Ht,2);
+% N_users = size(Hr,2);
+% M = size(Ht,1);
+% N_BS = size(Ht,2);
 
 % Channel Observations
 chan_obs_len = 2*(M * N_users + M * N_BS + N_BS* N_users); % channel observation (state) length (multiplied by 2 to account for complex nature)
@@ -73,7 +73,7 @@ act_len = 2*(M + N_BS* N_users);
 
 transmit_pow_len = 2*N_users;
 receive_pow_len = 2*N_users^2;
-obs_len = chan_obs_len + transmit_pow_len + receive_pow_len + act_len;  
+obs_len = chan_obs_len;% + transmit_pow_len + receive_pow_len + act_len;  
 
 %% Create Environment
 disp('------- Creating Environment --------')
@@ -107,7 +107,7 @@ actInfo = rlNumericSpec([act_len, 1], 'LowerLimit', act_lower_lim, 'UpperLimit',
 actInfo.Name = 'action';
 actInfo.Description = 'stacked active and passive beamformers';
 
-ResetHandle = @() resetfcn_power(N_BS, N_users, M, sigma_2, SINR_target);
+ResetHandle = @() resetfcn_power(Hd_mat, Hr_mat, Ht_mat, sigma_2, SINR_target);
 StepHandle = @(action, LoggedSignals) stepfcn_power(action, LoggedSignals); 
 
 % Create Environment

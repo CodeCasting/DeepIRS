@@ -92,92 +92,103 @@ SINR_target = 10^(SINR_target_dB/10);
 % Set error threshold for alternating algorithm termination
 eps_iter=1e-1;
 
-%% Channel Generation
-% Using the DeepMIMO Dataset by Alkhateeb et al.
+%% DeepMIMO Channel Generation (commented for now since it is not available)
+% % Using the DeepMIMO Dataset by Alkhateeb et al.
+%
+% % Select which machine the code is running on
+% active_machine = 0;
+% if active_machine == 0
+%     % Personal machine
+%     deepmimo_root_path= 'C:/Khafagy/DeepMIMO'; % Datasets/Large files
+%     code_folder = 'C:/Users/Mohammad/Google Drive (mgkhafagy@aucegypt.edu)/MATLAB Codes'; % Code stored on the cloud
+% elseif active_machine == 1
+%     % Research Lab Windows Workstation
+%     deepmimo_root_path= 'D:/Khafagy/DeepMIMO';
+%     code_folder = 'C:/Users/Dr. M-Khafagy/Google Drive/MATLAB Codes';
+% elseif active_machine == 2
+%     % Research Lab Linux Workstation
+%     deepmimo_root_path= '/home/khafagy/Storage/DeepMIMO';
+%     code_folder = '/home/khafagy/Storage/git/DeepIRS';
+% end
+% cd(code_folder)
+%
+% % for dataset retrieval and storage from/to local server (not on the cloud)
+%
+% %% DeepMIMO Dataset Generation (CALLING DeepMIMO_generator)
+% % DeepMIMO_generator calls read_raytracing then construct_DeepMIMO_channel
+% % These code files are created by Alkhateeb et al.
+% disp('===============GENERATING DEEPMIMO DATASET===================');
+% %disp('-------------------------------------------------------------');
+% %disp([' Calculating for K_DL = ' num2str(K_DL)]);
+% % ------  Inputs to the DeepMIMO dataset generation code ------------ %
+% % Note: The axes of the antennas match the axes of the ray-tracing scenario
+% params.num_ant_x= Mx;             % Number of the UPA antenna array on the x-axis
+% params.num_ant_y= My;             % Number of the UPA antenna array on the y-axis
+% params.num_ant_z= Mz;             % Number of the UPA antenna array on the z-axis
+% params.ant_spacing=D_Lambda;      % ratio of the wavelnegth; for half wavelength enter .5
+% params.bandwidth= BW*1e-9;        % The bandiwdth in GHz
+% params.num_OFDM= K;               % Number of OFDM subcarriers
+% params.OFDM_sampling_factor=1;    % The constructed channels will be calculated only at the sampled subcarriers (to reduce the size of the dataset)
+% params.OFDM_limit=K_DL*1;         % Only the first params.OFDM_limit subcarriers will be considered when constructing the channels
+% params.num_paths=L;               % Maximum number of paths to be considered (a value between 1 and 25), e.g., choose 1 if you are only interested in the strongest path
+% params.saveDataset=0;
+% disp([' Calculating for L = ' num2str(params.num_paths)]);
+%
+% %% BS-IRS Channels
+% disp('==========Generating Transmit BS-IRS Full Channel============');
+% % ------------------ DeepMIMO "Ut" Dataset Generation ----------------- %
+% params.active_user_first=Ut_row;
+% params.active_user_last=Ut_row;                                 % Only one active user (but where is Ut_element to fully specify the user??) -- see below
+% DeepMIMO_dataset=DeepMIMO_generator(params,deepmimo_root_path); % Generator function generates data for entire rows
+% %Ht = single(DeepMIMO_dataset{1}.user{Ut_element}.channel);     % Selecting element of interest here
+% Ht = DeepMIMO_dataset{1}.user{Ut_element}.channel;              % Selecting element of interest here
+%
+% clear DeepMIMO_dataset
+%
+% % ----------- Add BS MIMO Functionality here -------
+% % Remember to later randomize the transmitter as well, so that the neural
+% % network is not a function of a fixed BS-IRS channel
+%
+% % Adjust size for now (simply replicate), then fix the MIMO functionality later
+% %Ht = repmat(Ht,1, N_BS);
+% Ht = 1e-4/sqrt(2)*(randn(M, N_BS)+1i*randn(M, N_BS));
+%
+% %% IRS - Receiver Channels
+% disp('===========Generating IRS-Receiver Full Channels=============');
+% % ------------------ DeepMIMO "Ur" Dataset Generation -----------------%
+% %initialization
+% Ur_rows_step = 300; % access the dataset 100 rows at a time
+% Ur_rows_grid=Ur_rows(1):Ur_rows_step:Ur_rows(2);
+% Delta_H_max = single(0);
+% for pp = 1:1:numel(Ur_rows_grid)-1          % loop for Normalizing H
+%     clear DeepMIMO_dataset
+%     params.active_user_first=Ur_rows_grid(pp);
+%     params.active_user_last=Ur_rows_grid(pp+1)-1;
+%     disp(['=== User Row Batch ' num2str(pp) ' out of ' num2str(numel(Ur_rows_grid)-1) ', each holding ' num2str(Ur_rows_step) ' rows ====='])
+%     [DeepMIMO_dataset,params]=DeepMIMO_generator(params,deepmimo_root_path);
+%     for u=1:params.num_user                 % seems to be hard-coded as rows*181 already
+%         Hr = single(conj(DeepMIMO_dataset{1}.user{u}.channel));    % conjugated since it is now downlink
+%         Delta_H = max(max(abs(Ht.*Hr)));
+%         if Delta_H >= Delta_H_max
+%             Delta_H_max = single(Delta_H);  % storing the maximum absolute value of the end-to-end product channel for later normalization
+%         end
+%     end
+% end
+% clear Delta_H
 
-% Select which machine the code is running on
-active_machine = 0;
-if active_machine == 0
-    % Personal machine
-    deepmimo_root_path= 'C:/Khafagy/DeepMIMO'; % Datasets/Large files
-    code_folder = 'C:/Users/Mohammad/Google Drive (mgkhafagy@aucegypt.edu)/MATLAB Codes'; % Code stored on the cloud
-elseif active_machine == 1
-    % Research Lab Windows Workstation
-    deepmimo_root_path= 'D:/Khafagy/DeepMIMO';
-    code_folder = 'C:/Users/Dr. M-Khafagy/Google Drive/MATLAB Codes';
-elseif active_machine == 2
-    % Research Lab Linux Workstation
-    deepmimo_root_path= '/home/khafagy/Storage/DeepMIMO';
-    code_folder = '/home/khafagy/Storage/git/DeepIRS';
-end
-cd(code_folder)
-
-% for dataset retrieval and storage from/to local server (not on the cloud)
-
-%% DeepMIMO Dataset Generation (CALLING DeepMIMO_generator)
-% DeepMIMO_generator calls read_raytracing then construct_DeepMIMO_channel
-% These code files are created by Alkhateeb et al.
-disp('===============GENERATING DEEPMIMO DATASET===================');
-%disp('-------------------------------------------------------------');
-%disp([' Calculating for K_DL = ' num2str(K_DL)]);
-% ------  Inputs to the DeepMIMO dataset generation code ------------ %
-% Note: The axes of the antennas match the axes of the ray-tracing scenario
-params.num_ant_x= Mx;             % Number of the UPA antenna array on the x-axis
-params.num_ant_y= My;             % Number of the UPA antenna array on the y-axis
-params.num_ant_z= Mz;             % Number of the UPA antenna array on the z-axis
-params.ant_spacing=D_Lambda;      % ratio of the wavelnegth; for half wavelength enter .5
-params.bandwidth= BW*1e-9;        % The bandiwdth in GHz
-params.num_OFDM= K;               % Number of OFDM subcarriers
-params.OFDM_sampling_factor=1;    % The constructed channels will be calculated only at the sampled subcarriers (to reduce the size of the dataset)
-params.OFDM_limit=K_DL*1;         % Only the first params.OFDM_limit subcarriers will be considered when constructing the channels
-params.num_paths=L;               % Maximum number of paths to be considered (a value between 1 and 25), e.g., choose 1 if you are only interested in the strongest path
-params.saveDataset=0;
-disp([' Calculating for L = ' num2str(params.num_paths)]);
-
-%% BS-IRS Channels
-disp('==========Generating Transmit BS-IRS Full Channel============');
-% ------------------ DeepMIMO "Ut" Dataset Generation ----------------- %
-params.active_user_first=Ut_row;
-params.active_user_last=Ut_row;                                 % Only one active user (but where is Ut_element to fully specify the user??) -- see below
-DeepMIMO_dataset=DeepMIMO_generator(params,deepmimo_root_path); % Generator function generates data for entire rows
-%Ht = single(DeepMIMO_dataset{1}.user{Ut_element}.channel);     % Selecting element of interest here
-Ht = DeepMIMO_dataset{1}.user{Ut_element}.channel;              % Selecting element of interest here
-
-clear DeepMIMO_dataset
-
-% ----------- Add BS MIMO Functionality here -------
-% Remember to later randomize the transmitter as well, so that the neural
-% network is not a function of a fixed BS-IRS channel
-
-% Adjust size for now (simply replicate), then fix the MIMO functionality later
-%Ht = repmat(Ht,1, N_BS);
-Ht = 1e-4/sqrt(2)*(randn(M, N_BS)+1i*randn(M, N_BS));
-
-%% IRS - Receiver Channels
-disp('===========Generating IRS-Receiver Full Channels=============');
-% ------------------ DeepMIMO "Ur" Dataset Generation -----------------%
-%initialization
-Ur_rows_step = 300; % access the dataset 100 rows at a time
-Ur_rows_grid=Ur_rows(1):Ur_rows_step:Ur_rows(2);
-Delta_H_max = single(0);
-for pp = 1:1:numel(Ur_rows_grid)-1          % loop for Normalizing H
-    clear DeepMIMO_dataset
-    params.active_user_first=Ur_rows_grid(pp);
-    params.active_user_last=Ur_rows_grid(pp+1)-1;
-    disp(['=== User Row Batch ' num2str(pp) ' out of ' num2str(numel(Ur_rows_grid)-1) ', each holding ' num2str(Ur_rows_step) ' rows ====='])
-    [DeepMIMO_dataset,params]=DeepMIMO_generator(params,deepmimo_root_path);
-    for u=1:params.num_user                 % seems to be hard-coded as rows*181 already
-        Hr = single(conj(DeepMIMO_dataset{1}.user{u}.channel));    % conjugated since it is now downlink
-        Delta_H = max(max(abs(Ht.*Hr)));
-        if Delta_H >= Delta_H_max
-            Delta_H_max = single(Delta_H);  % storing the maximum absolute value of the end-to-end product channel for later normalization
-        end
-    end
-end
-clear Delta_H
+%% Pregenerate randomly and store channels for now for all sim_len (replace with DeepMIMO channels later when available)
+Hd_mat = 1e-4/sqrt(2)*(randn(N_BS, N_users, sim_len)+1i*randn(N_BS, N_users, sim_len));
+Hr_mat = 1e-2/sqrt(2)*(randn(M, N_users, sim_len)+1i*randn(M, N_users, sim_len));
+Ht_mat = 1e-2/sqrt(2)*(randn(M, N_BS, sim_len)+1i*randn(M, N_BS, sim_len));
 
 %% Create and Train DDPG AGENT
 drl_IRS
+
+%% Generate different channels for testing
+
+Hd_mat = 1e-4/sqrt(2)*(randn(N_BS, N_users, sim_len)+1i*randn(N_BS, N_users, sim_len));
+Hr_mat = 1e-2/sqrt(2)*(randn(M, N_users, sim_len)+1i*randn(M, N_users, sim_len));
+Ht_mat = 1e-2/sqrt(2)*(randn(M, N_BS, sim_len)+1i*randn(M, N_BS, sim_len));
 
 %% Loop over different user permutations and store optimized solutions
 tic
@@ -189,13 +200,13 @@ user_loc{N_users} = {};
 % Fix seed
 rng(1);
 
-% myCluster = parcluster();
-% if isempty(gcp)
-%     myPool = parpool(myCluster);
-% end
+myCluster = parcluster();
+if isempty(gcp)
+    myPool = parpool(myCluster);
+end
 
 disp('Looping over different multi-user patterns and generating optimized matrices')
-for sim_index = 1:sim_len
+parfor sim_index = 1:sim_len
     disp(['=== User pattern ' num2str(sim_index) ' out of ' num2str(sim_len) ' ====='])
     
     % Select N_users random user indices
@@ -215,21 +226,132 @@ for sim_index = 1:sim_len
     
     % Let the direct channel be denoted by Hsd (source to destination)
     %Hd = zeros(N_BS, N_users);
-    Hd = 1e-4/sqrt(2)*(randn(N_BS, N_users)+1i*randn(N_BS, N_users));
-    Hr = 1e-2/sqrt(2)*(randn(M, N_users)+1i*randn(M, N_users));
-    Ht = 1e-2/sqrt(2)*(randn(M, N_BS)+1i*randn(M, N_BS));
+    Hd = Hd_mat(:,:,sim_index);
+    Hr = Hr_mat(:,:,sim_index);
+    Ht = Ht_mat(:,:,sim_index);
     
     ML_dataset{sim_index}.Ht = Ht; % Store transmit (1st hop) channel
     ML_dataset{sim_index}.Hd = Hd;  % Store direct channel
     ML_dataset{sim_index}.Hr = Hr;  % Store receive (2nd hop) channel
     %ML_dataset{sim_index}.user_loc = [user_loc{:}]; % Store user_locations
     
+    %% Alternating Optimization
+    %disp('Running alternating optimization algorithm')
+    % r=1;            % iteration index
+    % Initialize reflection matrix theta
+    beta_vec = ones(M,1);               % Fixed to 1 for now as in the paper
+    theta_vec = 2*pi*rand(M,1);          % Uniformly randomized from 0 to 2*pi
+    theta_mat= diag(beta_vec.*exp(1i*theta_vec));
     
-    alternating_optimization
+    H = Ht'*(theta_mat')*Hr + Hd;
     
+    % Check rank criterion for feasbility of the initial theta choice
+    while ~(rank(H) == N_users) % if infeasible choice, randomize and check again
+        %disp('infeasible initial choice of theta, .. reselecting ..')
+        theta_vec = 2*pi*rand(M,1);           % Uniformly randomized from 0 to 2*pi
+        theta_mat= diag(beta_vec.*exp(1i*theta_vec));
+        H = Ht'*(theta_mat')*Hr + Hd;
+    end
+    
+    cvx_status = 'nothing'; % initialize
+    
+    while (frac_error > eps_iter)  && ~contains(cvx_status,'Infeasible','IgnoreCase',true)
+        %     if mod(r,1e2)==0
+        %         %disp(['Iteration r =' num2str(r)])
+        %     end
+        
+        H = Ht'*(theta_mat')*Hr + Hd;
+        
+        % ==== Optimize W while fixing theta ==== BS Transmit Beamforming
+        %disp('Active Beamformer Design')
+        
+        [W, tau, INTERF, cvx_status, cvx_optval] = iter_opt_prob_1(H,sigma_2,SINR_target,int_users_matrix);
+        
+        if  cvx_optval==Inf
+            %disp('Infeasible .. passing this iteration')
+            continue
+        end
+        %disp(['CVX Status: ' cvx_status ', CVX_optval = ' num2str(10*log10(cvx_optval*1000)) ' dBm'])
+        %disp(['CVX Status: ' cvx_status ', CVX_optval = ' num2str(10*log10(trace(W'*W)*1000)) ' dBm'])
+        
+        frac_error = abs(obj_last - cvx_optval)/obj_last *100;
+        obj_last = cvx_optval;
+        
+        achieved_SINR = zeros(1,N_users);
+        % Actual achieved SINR
+        for k = all_users
+            achieved_SINR(k) = (norm((H(:,k)')*W(:,k)))^2/(norm(INTERF(:,k)))^2;
+        end
+        
+        
+        % ==== Optimize theta while fixing W ==== IRS Reflection Matrix
+        % (P4') in paper
+        %disp('Passive Beamformer Design')
+        
+        [V, a_aux, a, b, R, desired, interference, SINR_CONSTR, cvx_status, cvx_optval] = iter_opt_prob_2(W, Ht,Hr,Hd,sigma_2,SINR_target,int_users_matrix);
+        
+        %disp(['CVX Status: ' cvx_status])
+        
+        if ~contains(cvx_status,'Infeasible','IgnoreCase',true)
+            %disp('Running Gaussian Randomization')
+            [U,D] = eig(full(V));                         % Eigenvalue Decomposition
+            if rank(full(V)) == 1
+                v_bar = U*sqrt(D);
+                theta_vec = angle(v_bar(1:M)/v_bar(M+1));
+                v = exp(-1i*theta_vec);
+                theta_mat = diag(v);
+                
+            else             % Apply Gaussian Randomization
+                
+                num_rands = 1e3;                        % number of randomizations
+                
+                % Generate Gaussian random vector ~ CN(0, I)
+                %gpudev = gpuDevice();
+                %reset(gpudev);
+                r_vec_matrix = (1/sqrt(2))*((mvnrnd(zeros(M+1,1),eye(M+1),num_rands) + 1i * mvnrnd(zeros(M+1,1),eye(M+1), num_rands)).'); %gpuArray()
+                v_bar_matrix = U*sqrt(D)*r_vec_matrix;
+                
+                best_index = 0;
+                best_value = -1e8;
+                %v_bar_matrix = exp(1i*2*pi*rand(M+1,num_rands));
+                
+                for randmzn_index = 1:num_rands
+                    v_bar_vec = v_bar_matrix(:,randmzn_index);
+                    V_rand = v_bar_vec*(v_bar_vec');
+                    
+                    [~, ~, constr_value] = sinr_CONSTRAINT(V_rand, b, R, SINR_target, sigma_2, all_users, int_users_matrix);
+                    
+                    % Check feasibility and best value
+                    feasibility_check = prod( constr_value >=  0 );
+                    better_value_check = (sum(constr_value) > best_value);
+                    if  feasibility_check && better_value_check
+                        best_index = randmzn_index;
+                        best_value = sum(constr_value);
+                    end
+                end
+                
+                if best_index ~= 0
+                    % select best v_bar that maximizes SINR_CONSTR
+                    v_bar = v_bar_matrix(:,best_index);
+                    theta_vec = angle(v_bar(1:M)/v_bar(M+1));
+                    v = exp(-1i*theta_vec);
+                    theta_mat = diag(v);
+                else
+                    cvx_status = 'Infeasible';
+                end
+                
+                %disp(['CVX Status after randomization: ' cvx_status])
+            end
+        end
+        
+        %     % Increment iteration index
+        %     r = r+1;
+    end
+    
+    %%
     ML_dataset{sim_index}.W = W;  % Store Transmit Beamformer
     ML_dataset{sim_index}.theta = diag(theta_mat);  % Store Reflection Matrix Diagonal
-    ML_dataset{sim_index}.iterations = r-1;
+    %ML_dataset{sim_index}.iterations = r-1;
     
     % ----------- end iterative algorithm ------------------
     
@@ -242,7 +364,7 @@ end
 
 delete(gcp('nocreate'))
 
-save([deepmimo_root_path '/saved_datasets.mat'], 'ML_dataset')
+% save([deepmimo_root_path '/saved_datasets.mat'], 'ML_dataset')
 disp(['Elapsed time = ' num2str(toc/60) ' minutes.'])
 
 %% Build Neural Network here
