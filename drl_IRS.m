@@ -53,7 +53,7 @@ t_c = 1e-3;     % learning rate for target critic network update
 % ------------- Created DDPG AGENT Options -------------------
 D = 1e5;        % Length of replay experience memory window
 W_exp = 16;     % Number of experiences in the mini-batch
-gam = 0.01;        % Discount factor
+gam = 0.01;     % Discount factor
 U = 1;          % Number of steps synchronizing target with training network
 
 % ------------- For DDPG AGENT Training ----------------------
@@ -238,6 +238,12 @@ DDPG_agent_OPTIONS =    rlDDPGAgentOptions('DiscountFactor',gam, ...
     'ExperienceBufferLength',D,...
     'MiniBatchSize', W_exp,...
     'TargetUpdateFrequency', U);
+
+
+% Create here ExplorationModel noise object: exploration aspect
+
+DDPG_agent_OPTIONS.ExplorationModel.Variance = 0.1;
+DDPG_agent_OPTIONS.ExplorationModel.VarianceDecayRate = 1e-4;
 
 %% 4- Create DDPG agent
 disp('------- Creating DDPG Agent --------')

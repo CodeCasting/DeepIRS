@@ -36,7 +36,6 @@ theta_realimag_vec = [real(theta_vec); imag(theta_vec)];
 theta_mat = diag(theta_vec);
 Action = [W_realimag_vec; theta_realimag_vec];
 
-
 transmit_pow = [diag(real(W)'*real(W)); diag(imag(W)'*imag(W))];
 
 H_W = W'*(Ht'*(theta_mat')*Hr + Hd);

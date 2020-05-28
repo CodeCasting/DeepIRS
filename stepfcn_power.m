@@ -39,7 +39,7 @@ chan_obs =  [  real(Ht(:)); imag(Ht(:));
                real(Hr(:)); imag(Hr(:));
                real(Hd(:)); imag(Hd(:))];
 
-%observation = [transmit_pow; receive_pow; chan_obs; Action];
+%new_observation = [transmit_pow; receive_pow; chan_obs; Action];
 
 new_observation = chan_obs;
             
@@ -61,7 +61,7 @@ if min(SINR)>LoggedSignals.SINR_threshold
     IsDone = 1;
 else
     Reward = -1;
-    IsDone = 1; %change later
+    IsDone = 1; %dummy for now .. change later
 end
 
 LoggedSignals.chan_index = LoggedSignals.chan_index+1;  % Store new channel index
@@ -70,10 +70,10 @@ Hd = LoggedSignals.Hd_mat(:,:,LoggedSignals.chan_index);
 Hr = LoggedSignals.Hr_mat(:,:,LoggedSignals.chan_index);
 Ht = LoggedSignals.Ht_mat(:,:,LoggedSignals.chan_index);
 
-% ================DEBUGGING=============================
-Hd = 1e-4/sqrt(2)*(randn(size(Hd))+1i*randn(size(Hd)));
-Hr = 1e-2/sqrt(2)*(randn(size(Hr))+1i*randn(size(Hr)));
-Ht = 1e-2/sqrt(2)*(randn(size(Ht))+1i*randn(size(Ht)));
+% % ================DEBUGGING=============================
+% Hd = 1e-4/sqrt(2)*(randn(size(Hd))+1i*randn(size(Hd)));
+% Hr = 1e-2/sqrt(2)*(randn(size(Hr))+1i*randn(size(Hr)));
+% Ht = 1e-2/sqrt(2)*(randn(size(Ht))+1i*randn(size(Ht)));
 
 % Update Logged Signals
 LoggedSignals.new_chan_obs.Ht = Ht;

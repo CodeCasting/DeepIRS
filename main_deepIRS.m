@@ -361,6 +361,7 @@ parfor sim_index = 1:sim_len
         real(Hr(:)); imag(Hr(:));
         real(Hd(:)); imag(Hd(:))];
     ML_dataset{sim_index}.DRL_solution = DDPG_AGENT.getAction(chan_obs);
+    
 end
 
 delete(gcp('nocreate'))
