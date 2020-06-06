@@ -80,6 +80,7 @@ K=1;                          % No OFDM
 K_DL =1;
 
 T = 2e4; % number of steps per episode for training
+N_epis = 5e2;           % Number of episodes (changed due to DUPLICATE NAME)
 sim_len = 1e1;              % Number of generated different multiuser scenarios
 
 sigma_2_dBm = -80; % Noise variance in dBm
@@ -177,10 +178,10 @@ eps_iter=1e-1;
 % end
 % clear Delta_H
 
-%% Pregenerate randomly and store channels for now for all sim_len (replace with DeepMIMO channels later when available)
-Hd_mat = 1e-4/sqrt(2)*(randn(N_BS, N_users, T)+1i*randn(N_BS, N_users, T));
-Hr_mat = 1e-2/sqrt(2)*(randn(M, N_users, T)+1i*randn(M, N_users, T));
-Ht_mat = 1e-2/sqrt(2)*(randn(M, N_BS, T)+1i*randn(M, N_BS, T));
+%% Pregenerate Training Channels
+Hd_mat = 1e-4/sqrt(2)*(randn(N_BS, N_users, N_epis)+1i*randn(N_BS, N_users, N_epis));
+Hr_mat = 1e-2/sqrt(2)*(randn(M, N_users, N_epis)+1i*randn(M, N_users, N_epis));
+Ht_mat = 1e-2/sqrt(2)*(randn(M, N_BS, N_epis)+1i*randn(M, N_BS, N_epis));
 
 %% Create and Train DDPG AGENT
 drl_IRS

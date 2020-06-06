@@ -29,7 +29,7 @@ disp('---------- Running DDPG --------')
 % Environment and Agent are first created, then trained over the channels.
 
 %% Simulation Parameters (in Table 1 in the paper)
-
+% close ALL FORCE
 % For more info about DDPG agent in MATLAB, see:
 % https://www.mathworks.com/help/reinforcement-learning/ug/ddpg-agents.html#mw_086ee5c6-c185-4597-aefc-376207c6c24c
 % For other supported Reinforcement Learning agents see:
@@ -53,11 +53,11 @@ t_c = 1e-3;     % learning rate for target critic network update
 % ------------- Created DDPG AGENT Options -------------------
 D = 1e5;        % Length of replay experience memory window
 W_exp = 16;     % Number of experiences in the mini-batch
-gam = 0.01;     % Discount factor
+gam = 0.999999;     % Discount factor
 U = 1;          % Number of steps synchronizing target with training network
 
 % ------------- For DDPG AGENT Training ----------------------
-N_epis = 5e1;           % Number of episodes (changed due to DUPLICATE NAME)
+N_epis = 5e2;           % Number of episodes (changed due to DUPLICATE NAME)
 T = 2e4;                % Number of steps per episode
 
 %% Memory Preallocation
@@ -73,7 +73,14 @@ act_len = M+ 2*N_BS* N_users; % 2*(M + N_BS* N_users);
 
 transmit_pow_len = 2*N_users;
 receive_pow_len = 2*N_users^2;
-obs_len = chan_obs_len;% + transmit_pow_len + receive_pow_len + act_len;  
+
+chan_state_design = 1;
+switch chan_state_design
+    case 1
+        obs_len = chan_obs_len + transmit_pow_len + receive_pow_len + act_len;
+    case 2
+        obs_len = chan_obs_len;
+end
 
 %% Create Environment
 disp('------- Creating Environment --------')
@@ -94,6 +101,7 @@ disp('------- Creating Environment --------')
 % 2- The received power of all users in the t^{th} time step.
 % 3- The previous action in the (t-1)^{th} time step.
 % 4- The channels.
+
 obs_lower_lim = -Inf;
 obs_upper_lim =  Inf;
 obsInfo = rlNumericSpec([obs_len 1], 'LowerLimit', obs_lower_lim, 'UpperLimit',obs_upper_lim);
@@ -101,14 +109,18 @@ obsInfo.Name = 'observation';
 obsInfo.Description = 'instantaneously observed channels, transmit and rec. powers, and past action';
 
 % Action Specification
-act_lower_lim = [-Inf*ones(act_len-M,1); 0*ones(M,1)];
-act_upper_lim = [Inf*ones(act_len-M,1); 2*pi*ones(M,1)];
+x = 0.002;
+act_lower_lim = [-x*ones(act_len-M,1); 0*ones(M,1)];
+act_upper_lim = [x*ones(act_len-M,1); 2*pi*ones(M,1)];
 actInfo = rlNumericSpec([act_len, 1], 'LowerLimit', act_lower_lim, 'UpperLimit',act_upper_lim);
 actInfo.Name = 'action';
 actInfo.Description = 'stacked active and passive beamformers';
 
-ResetHandle = @() resetfcn_power(Hd_mat, Hr_mat, Ht_mat, sigma_2, SINR_target);
-StepHandle = @(action, LoggedSignals) stepfcn_power(action, LoggedSignals); 
+new_chan_obs.Hd = Hd_mat(:,:,1);
+new_chan_obs.Hr = Hr_mat(:,:,1);
+new_chan_obs.Ht = Ht_mat(:,:,1);
+ResetHandle = @() resetfcn2_power(new_chan_obs, sigma_2, SINR_target, chan_state_design);
+StepHandle = @(action, LoggedSignals) stepfcn2_power(action, LoggedSignals); 
 
 % Create Environment
 MU_MISO_IRS_env = rlFunctionEnv(obsInfo,actInfo,StepHandle,ResetHandle);
@@ -234,13 +246,18 @@ CRITIC = rlQValueRepresentation(critic_net,...
 
 %% 3- Specify DDPG Agent options
 disp('------- Specifying DDPG Agent Options --------')
-DDPG_agent_OPTIONS =    rlDDPGAgentOptions('DiscountFactor',gam, ...
+DDPG_agent_OPTIONS =    rlDDPGAgentOptions(...
+    'DiscountFactor',gam, ...
     'ExperienceBufferLength',D,...
     'MiniBatchSize', W_exp,...
-    'TargetUpdateFrequency', U);
+    'TargetUpdateFrequency', U,...
+    'ResetExperienceBufferBeforeTraining',0,...
+    'NumStepsToLookAhead',T,...
+    'SaveExperienceBufferWithAgent',0); 
 
 % Create here ExplorationModel noise object: exploration aspect
-DDPG_agent_OPTIONS.NoiseOptions.Variance = 1;
+DDPG_agent_OPTIONS.NoiseOptions.Variance = [1e-5*ones(2*N_BS* N_users,1); 1e-3*2*pi*ones(M,1)];
+DDPG_agent_OPTIONS.NoiseOptions.VarianceMin= [0*ones(2*N_BS* N_users,1); 1e-4*2*pi*ones(M,1)]; % to always guarantee exploration
 DDPG_agent_OPTIONS.NoiseOptions.VarianceDecayRate = 1e-4;
 
 %% 4- Create DDPG agent
@@ -256,9 +273,12 @@ DDPG_AGENT = rlDDPGAgent(ACTOR,CRITIC,DDPG_agent_OPTIONS);
 DDPG_train_options = rlTrainingOptions(...
     'MaxEpisodes',N_epis,...
     'MaxStepsPerEpisode',T,...
-    'UseParallel', true,...%'Parallelization', 'async',...
+    'StopTrainingCriteria', 'GlobalStepCount',...
+    'StopTrainingValue', T,...%'UseParallel', true,...%'Parallelization', 'async',...
+    'ScoreAveragingWindowLength',T,...
     'Verbose', true,...
-    'Plots', 'training-progress');
+    'Plots', 'training-progress',...
+    'StopOnError', 'off');
 
 % DDPG_train_options.ParallelizationOptions.Mode = 
     

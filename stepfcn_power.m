@@ -35,8 +35,13 @@ receive_pow = H_real_imag_vec.^2;
 
 % Channel observation
 chan_obs = [real(Ht(:)); imag(Ht(:)); real(Hr(:)); imag(Hr(:)); real(Hd(:)); imag(Hd(:))];
-%new_observation = [transmit_pow; receive_pow; chan_obs; action];
-new_observation = chan_obs;
+
+switch LoggedSignals.StateDes
+    case 1
+        new_observation = [transmit_pow; receive_pow; chan_obs; action];
+    case 2
+        new_observation = chan_obs;
+end
             
 int_users_matrix = LoggedSignals.int_users_matrix;
 % Calculate and return reward
@@ -50,23 +55,21 @@ for  user_ind = 1 : N_users
     SINR(user_ind) = norm(desired,2)^2/norm(interf,2)^2;
 end
 
-%disp(min(SINR))
+IsDone = min(SINR)<LoggedSignals.SINR_threshold;
 
-if min(SINR)>LoggedSignals.SINR_threshold
+if ~IsDone
     Reward = 1/sum(transmit_pow);
-    IsDone = 1;
 else
     Reward = -1;
-    IsDone = 1; %dummy for now .. change later
 end
 
 % -------------- Update Logged Signals ------------------
 LoggedSignals.chan_index = LoggedSignals.chan_index+1;  % Store new channel index
 % LoggedSignals.chan_index
 % Fix channel for now: index is always equal to 1
-LoggedSignals.new_chan_obs.Ht = LoggedSignals.Ht_mat(:,:,1);
-LoggedSignals.new_chan_obs.Hr = LoggedSignals.Hr_mat(:,:,1);
-LoggedSignals.new_chan_obs.Hd = LoggedSignals.Hd_mat(:,:,1);
+LoggedSignals.new_chan_obs.Ht = LoggedSignals.Ht_mat(:,:,LoggedSignals.chan_index);
+LoggedSignals.new_chan_obs.Hr = LoggedSignals.Hr_mat(:,:,LoggedSignals.chan_index);
+LoggedSignals.new_chan_obs.Hd = LoggedSignals.Hd_mat(:,:,LoggedSignals.chan_index);
 LoggedSignals.State = new_observation;          % Return past state
 %LoggedSignals.Action = Action;                 % Return past action
 end
