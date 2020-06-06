@@ -86,7 +86,7 @@ sigma_2_dBm = -80; % Noise variance in dBm
 sigma_2 = 10^(sigma_2_dBm/10) * 1e-3; % (in Watts)
 
 % SINR target
-SINR_target_dB = 5; % Check: changing target SINR should change the transmit power (the cvx_optval objective value)
+SINR_target_dB = 0; % Check: changing target SINR should change the transmit power (the cvx_optval objective value)
 SINR_target = 10^(SINR_target_dB/10);
 
 % Alternating optimization algorithm (Algorithm 1 in [R1])
@@ -350,8 +350,8 @@ parfor sim_index = 1:sim_len
     end
     
     %%
-    ML_dataset{sim_index}.W = W;  % Store Transmit Beamformer
-    ML_dataset{sim_index}.theta = diag(theta_mat);  % Store Reflection Matrix Diagonal
+    ML_dataset{sim_index}.W_OPT = W;  % Store Transmit Beamformer
+    ML_dataset{sim_index}.theta_OPT = -1i*log(diag(theta_mat));  % Store Reflection Coefficients
     ML_dataset{sim_index}.iterations = r-1;
     
     % ----------- end iterative algorithm ------------------
@@ -360,7 +360,9 @@ parfor sim_index = 1:sim_len
     chan_obs =  [  real(Ht(:)); imag(Ht(:));
         real(Hr(:)); imag(Hr(:));
         real(Hd(:)); imag(Hd(:))];
-    ML_dataset{sim_index}.DRL_solution = DDPG_AGENT.getAction(chan_obs);
+    Action = DDPG_AGENT.getAction(chan_obs);
+    ML_dataset{sim_index}.W_DRL = reshape(Action(1:N_BS*N_users)+ 1i*Action(N_BS*N_users+1:2*N_BS*N_users), N_BS, N_users);
+    ML_dataset{sim_index}.theta_DRL = Action(2*N_BS*N_users+1:2*N_BS*N_users+M);
     
 end
 
@@ -507,39 +509,36 @@ SINR_OPT = zeros(N_users,sim_len);
 transmit_pow_DRL = zeros(sim_len,1);
 transmit_pow_OPT = zeros(sim_len,1);
 
-for sim_ind = 1:sim_len
-    Ht = ML_dataset{sim_ind}.Ht;
-    Hd = ML_dataset{sim_ind}.Hd;
-    Hr = ML_dataset{sim_ind}.Hr;
-    Action = ML_dataset{sim_ind}.DRL_solution;
-    % Extract BS beamformer from taken action
-    W_DRL = reshape(Action(1:N_BS*N_users)+ 1i*Action(N_BS*N_users+1:2*N_BS*N_users), N_BS, N_users);
-    % Extract IRS reflection vector from taken action
-    theta_vec_DRL = Action(2*N_BS*N_users+1:2*N_BS*N_users+M)+ 1i*Action(2*N_BS*N_users+M+1:2*(N_BS*N_users+M));
-    theta_mat_DRL = diag(theta_vec_DRL);
+for sim_index = 1:sim_len
+    Ht = ML_dataset{sim_index}.Ht;
+    Hd = ML_dataset{sim_index}.Hd;
+    Hr = ML_dataset{sim_index}.Hr;
+    % DRL Solutions
+    % Extract BS beamformer and IRS reflection matrix from taken action
+    W_DRL = ML_dataset{sim_index}.W_DRL;
+    theta_vec_DRL = ML_dataset{sim_index}.theta_DRL;
+    theta_mat_DRL = diag(exp(1i*theta_vec_DRL));
     H_DRL = Ht'*(theta_mat_DRL')*Hr + Hd;
     
-    W_OPT = ML_dataset{sim_ind}.W;
-    theta_vec_OPT = ML_dataset{sim_ind}.theta;
-    theta_mat_OPT = diag(theta_vec_OPT);
-    
+    W_OPT = ML_dataset{sim_index}.W_OPT;
+    theta_vec_OPT = ML_dataset{sim_index}.theta_OPT;
+    theta_mat_OPT = diag(exp(1i*theta_vec_OPT));
     H_OPT = Ht'*(theta_mat_OPT')*Hr + Hd;
     
-    transmit_pow_DRL(sim_ind) = sum([diag(real(W_DRL)'*real(W_DRL)); diag(imag(W_DRL)'*imag(W_DRL))]);
-    transmit_pow_OPT(sim_ind) = sum([diag(real(W_OPT)'*real(W_OPT)); diag(imag(W_OPT)'*imag(W_OPT))]);
-    
+    transmit_pow_DRL(sim_index) = sum([diag(real(W_DRL)'*real(W_DRL)); diag(imag(W_DRL)'*imag(W_DRL))]);
+    transmit_pow_OPT(sim_index) = sum([diag(real(W_OPT)'*real(W_OPT)); diag(imag(W_OPT)'*imag(W_OPT))]);
     
     for  user_ind = 1 : N_users
         int_users = int_users_matrix(user_ind,:); % interfering user indices
         % DRL
         desired_DRL = W_DRL(:,user_ind)'*H_DRL(:,user_ind);
         interf_DRL = [W_DRL(:,int_users)'*H_DRL(:,user_ind); sqrt(sigma_2)];
-        SINR_DRL(user_ind,sim_ind) = norm(desired_DRL,2)^2/norm(interf_DRL,2)^2;
+        SINR_DRL(user_ind,sim_index) = norm(desired_DRL,2)^2/norm(interf_DRL,2)^2;
         
         % OPT
         desired_OPT = W_OPT(:,user_ind)'*H_OPT(:,user_ind);
         interf_OPT = [W_OPT(:,int_users)'*H_OPT(:,user_ind); sqrt(sigma_2)];
-        SINR_OPT(user_ind,sim_ind) = norm(desired_OPT,2)^2/norm(interf_OPT,2)^2;
+        SINR_OPT(user_ind,sim_index) = norm(desired_OPT,2)^2/norm(interf_OPT,2)^2;
     end
 end
 

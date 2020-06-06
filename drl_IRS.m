@@ -57,7 +57,7 @@ gam = 0.01;     % Discount factor
 U = 1;          % Number of steps synchronizing target with training network
 
 % ------------- For DDPG AGENT Training ----------------------
-N_epis = 5e3;           % Number of episodes (changed due to DUPLICATE NAME)
+N_epis = 5e1;           % Number of episodes (changed due to DUPLICATE NAME)
 T = 2e4;                % Number of steps per episode
 
 %% Memory Preallocation
@@ -69,7 +69,7 @@ T = 2e4;                % Number of steps per episode
 chan_obs_len = 2*(M * N_users + M * N_BS + N_BS* N_users); % channel observation (state) length (multiplied by 2 to account for complex nature)
 % Action length (number of reflecting elements + size of BS beamforming matrix)
 % multiplied by 2 for complex nature
-act_len = 2*(M + N_BS* N_users);     
+act_len = M+ 2*N_BS* N_users; % 2*(M + N_BS* N_users);     
 
 transmit_pow_len = 2*N_users;
 receive_pow_len = 2*N_users^2;
@@ -101,8 +101,8 @@ obsInfo.Name = 'observation';
 obsInfo.Description = 'instantaneously observed channels, transmit and rec. powers, and past action';
 
 % Action Specification
-act_lower_lim = -Inf;
-act_upper_lim =  Inf; % revise limits later for reflection coefficients
+act_lower_lim = [-Inf*ones(act_len-M,1); 0*ones(M,1)];
+act_upper_lim = [Inf*ones(act_len-M,1); 2*pi*ones(M,1)];
 actInfo = rlNumericSpec([act_len, 1], 'LowerLimit', act_lower_lim, 'UpperLimit',act_upper_lim);
 actInfo.Name = 'action';
 actInfo.Description = 'stacked active and passive beamformers';
@@ -239,11 +239,9 @@ DDPG_agent_OPTIONS =    rlDDPGAgentOptions('DiscountFactor',gam, ...
     'MiniBatchSize', W_exp,...
     'TargetUpdateFrequency', U);
 
-
 % Create here ExplorationModel noise object: exploration aspect
-
-DDPG_agent_OPTIONS.ExplorationModel.Variance = 0.1;
-DDPG_agent_OPTIONS.ExplorationModel.VarianceDecayRate = 1e-4;
+DDPG_agent_OPTIONS.NoiseOptions.Variance = 1;
+DDPG_agent_OPTIONS.NoiseOptions.VarianceDecayRate = 1e-4;
 
 %% 4- Create DDPG agent
 disp('------- Creating DDPG Agent --------')
