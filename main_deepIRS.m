@@ -79,7 +79,7 @@ BW = 100e6;                 % Bandwidth in Hz (ex: 100e6 --> 100 MHz)
 K=1;                          % No OFDM
 K_DL =1;
 
-T = 2e4; % number of steps per episode for training
+T = 2e2; % number of steps per episode for training
 N_epis = 5e2;           % Number of episodes (changed due to DUPLICATE NAME)
 sim_len = 1e1;              % Number of generated different multiuser scenarios
 
@@ -362,7 +362,13 @@ parfor sim_index = 1:sim_len
     chan_obs =  [  real(Ht(:)); imag(Ht(:));
         real(Hr(:)); imag(Hr(:));
         real(Hd(:)); imag(Hd(:))];
-    Action = DDPG_AGENT.getAction(chan_obs);
+    switch chan_state_design
+        case 1
+            obs = [chan_obs; past_action_default];
+        case 2
+            obs = chan_obs;
+    end
+    Action = DDPG_AGENT.getAction(obs);
     ML_dataset{sim_index}.W_DRL = reshape(Action(1:N_BS*N_users)+ 1i*Action(N_BS*N_users+1:2*N_BS*N_users), N_BS, N_users);
     ML_dataset{sim_index}.theta_DRL = Action(2*N_BS*N_users+1:2*N_BS*N_users+M);
     

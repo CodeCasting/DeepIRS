@@ -57,8 +57,8 @@ gam = 0.999999;     % Discount factor
 U = 1;          % Number of steps synchronizing target with training network
 
 % ------------- For DDPG AGENT Training ----------------------
-N_epis = 5e2;           % Number of episodes (changed due to DUPLICATE NAME)
-T = 2e4;                % Number of steps per episode
+%N_epis = 5e2;           % Number of episodes (changed due to DUPLICATE NAME)
+%T = 2e4;                % Number of steps per episode
 
 %% Memory Preallocation
 % N_users = size(Hr,2);
@@ -78,9 +78,11 @@ chan_state_design = 1;
 switch chan_state_design
     case 1
         obs_len = chan_obs_len + transmit_pow_len + receive_pow_len + act_len;
+        past_action_default = 1e-6*ones(transmit_pow_len + receive_pow_len + act_len,1);
     case 2
         obs_len = chan_obs_len;
 end
+
 
 %% Create Environment
 disp('------- Creating Environment --------')
@@ -271,7 +273,7 @@ DDPG_train_options = rlTrainingOptions(...
     'MaxEpisodes',N_epis,...
     'MaxStepsPerEpisode',T,...
     'StopTrainingCriteria', 'GlobalStepCount',...
-    'StopTrainingValue', T,...%'UseParallel', true,...%'Parallelization', 'async',...
+    'StopTrainingValue', 5e5,...%'UseParallel', true,...%'Parallelization', 'async',...
     'ScoreAveragingWindowLength',T,...
     'Verbose', true,...
     'Plots', 'training-progress',...
