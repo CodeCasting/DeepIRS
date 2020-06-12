@@ -7,7 +7,7 @@
 % This step function calculates the new state/observation and reward
 % due to taken (input) action wich the agent has just taken.
 
-function [new_observation,Reward,IsDone,LoggedSignals] = stepfcn2_power(action, LoggedSignals)
+function [new_observation,Reward,IsDone,LoggedSignals] = stepfcn(action, LoggedSignals)
 
 % -------------- Extract Logged Signals ------------------
 sigma_2 = LoggedSignals.sigma_2; % noise variance
@@ -65,6 +65,6 @@ end
 
 % -------------- Update Logged Signals ------------------
 LoggedSignals.step_index = LoggedSignals.step_index+1;  % Update new step index
-LoggedSignals.State = new_observation;          % Return past state
-%LoggedSignals.Action = Action;                 % Return past action
+LoggedSignals.State = new_observation;                  % Return past state
+%LoggedSignals.Action = Action;                         % Return past action
 end
