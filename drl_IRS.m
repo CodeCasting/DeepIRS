@@ -119,8 +119,8 @@ actInfo.Description = 'stacked active and passive beamformers';
 new_chan_obs.Hd = Hd_mat(:,:,1);
 new_chan_obs.Hr = Hr_mat(:,:,1);
 new_chan_obs.Ht = Ht_mat(:,:,1);
-ResetHandle = @() resetfcn2_power(new_chan_obs, sigma_2, SINR_target, chan_state_design);
-StepHandle = @(action, LoggedSignals) stepfcn2_power(action, LoggedSignals); 
+ResetHandle = @() resetfcn(new_chan_obs, sigma_2, SINR_target, chan_state_design);
+StepHandle = @(action, LoggedSignals) stepfcn(action, LoggedSignals); 
 
 % Create Environment
 MU_MISO_IRS_env = rlFunctionEnv(obsInfo,actInfo,StepHandle,ResetHandle);
