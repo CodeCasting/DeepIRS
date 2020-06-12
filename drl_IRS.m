@@ -116,10 +116,7 @@ actInfo = rlNumericSpec([act_len, 1], 'LowerLimit', act_lower_lim, 'UpperLimit',
 actInfo.Name = 'action';
 actInfo.Description = 'stacked active and passive beamformers';
 
-new_chan_obs.Hd = Hd_mat(:,:,1);
-new_chan_obs.Hr = Hr_mat(:,:,1);
-new_chan_obs.Ht = Ht_mat(:,:,1);
-ResetHandle = @() resetfcn(new_chan_obs, sigma_2, SINR_target, chan_state_design);
+ResetHandle = @() resetfcn(H_mat, sigma_2, SINR_target, chan_state_design);
 StepHandle = @(action, LoggedSignals) stepfcn(action, LoggedSignals); 
 
 % Create Environment

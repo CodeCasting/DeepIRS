@@ -179,9 +179,9 @@ eps_iter=1e-1;
 % clear Delta_H
 
 %% Pregenerate Training Channels
-Hd_mat = 1e-4/sqrt(2)*(randn(N_BS, N_users, N_epis)+1i*randn(N_BS, N_users, N_epis));
-Hr_mat = 1e-2/sqrt(2)*(randn(M, N_users, N_epis)+1i*randn(M, N_users, N_epis));
-Ht_mat = 1e-2/sqrt(2)*(randn(M, N_BS, N_epis)+1i*randn(M, N_BS, N_epis));
+H_mat.Hd_mat = 1e-4/sqrt(2)*(randn(N_BS, N_users, N_epis)+1i*randn(N_BS, N_users, N_epis));
+H_mat.Hr_mat = 1e-2/sqrt(2)*(randn(M, N_users, N_epis)+1i*randn(M, N_users, N_epis));
+H_mat.Ht_mat = 1e-2/sqrt(2)*(randn(M, N_BS, N_epis)+1i*randn(M, N_BS, N_epis));
 
 %% Create and Train DDPG AGENT
 drl_IRS
@@ -191,6 +191,7 @@ drl_IRS
 Hd_mat = 1e-4/sqrt(2)*(randn(N_BS, N_users, sim_len)+1i*randn(N_BS, N_users, sim_len));
 Hr_mat = 1e-2/sqrt(2)*(randn(M, N_users, sim_len)+1i*randn(M, N_users, sim_len));
 Ht_mat = 1e-2/sqrt(2)*(randn(M, N_BS, sim_len)+1i*randn(M, N_BS, sim_len));
+
 
 %% Loop over different user permutations and store optimized solutions
 tic

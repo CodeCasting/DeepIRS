@@ -1,12 +1,19 @@
 % Reset function for the MU-MISO IRS environment
 % https://www.mathworks.com/help/reinforcement-learning/ug/create-custom-reinforcement-learning-environment-in-matlab.html
-function [InitialObservation,LoggedSignals] = resetfcn(new_chan_obs, sigma_2, SINR_threshold, state_design)
+function [InitialObservation,LoggedSignals] = resetfcn(H_mat, sigma_2, SINR_threshold, state_design)
 
 % -------------- Initialized Logged Signals ------------------
-LoggedSignals.chan_index = 1;                                   % Initialize channel/step index
+if exist('LoggedSignals.chan_index','var') == 0
+ LoggedSignals.chan_index = 0;
+end
+LoggedSignals.chan_index = LoggedSignals.chan_index + 1;                                   % Initialize channel/step index
+LoggedSignals.step_index = 1;
 LoggedSignals.StateDes = state_design;
 LoggedSignals.sigma_2 = sigma_2;                                % Noise variance for all users
 LoggedSignals.SINR_threshold = SINR_threshold;                  % SINR threshold for all users
+new_chan_obs.Hd = H_mat.Hd_mat(:,:,LoggedSignals.chan_index);
+new_chan_obs.Hr = H_mat.Hr_mat(:,:,LoggedSignals.chan_index);
+new_chan_obs.Ht = H_mat.Ht_mat(:,:,LoggedSignals.chan_index);
 LoggedSignals.new_chan_obs = new_chan_obs;
 
 % Prepare first channels
