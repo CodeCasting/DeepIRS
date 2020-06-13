@@ -23,7 +23,7 @@
 
 %% Simulation Parameters
 clear
-close all
+%close all
 
 profile on
 
@@ -79,9 +79,9 @@ BW = 100e6;                 % Bandwidth in Hz (ex: 100e6 --> 100 MHz)
 K=1;                          % No OFDM
 K_DL =1;
 
-T = 2e2; % number of steps per episode for training
-N_epis = 5e2;           % Number of episodes (changed due to DUPLICATE NAME)
-sim_len = 1e1;              % Number of generated different multiuser scenarios
+T = 2e4;                    % number of steps per episode for training
+N_epis = 5e3;               % Number of episodes (changed due to DUPLICATE NAME)
+sim_len = 1e2;              % Number of generated different multiuser scenarios
 
 sigma_2_dBm = -80; % Noise variance in dBm
 sigma_2 = 10^(sigma_2_dBm/10) * 1e-3; % (in Watts)

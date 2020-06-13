@@ -40,15 +40,15 @@ used_optmzr = 'adam';   % Used optimizer
 used_device = 'cpu';    % gpu or cpu
 % Learning and Decay rates
 % Actor
-u_a = 1e-3;     % learning rate for training actor network update
+u_a = 1e-1;     % learning rate for training actor network update
 lam_a= 1e-5;    % decaying rate for training actor network update
 % Target Actor
-t_a = 1e-3;     % learning rate for target actor network update
+t_a = 1e-1;     % learning rate for target actor network update
 % Critic
-u_c = 1e-3;     % learning rate for training critic network update
+u_c = 1e-1;     % learning rate for training critic network update
 lam_c= 1e-5;    % decaying rate for training critic network update
 % Target Critic
-t_c = 1e-3;     % learning rate for target critic network update
+t_c = 1e-1;     % learning rate for target critic network update
 
 % ------------- Created DDPG AGENT Options -------------------
 D = 1e5;        % Length of replay experience memory window

@@ -57,11 +57,11 @@ end
 
 IsDone = min(SINR)>LoggedSignals.SINR_threshold;
 
-if ~IsDone
-    Reward = -1;
-else
-     Reward = -sum(transmit_pow);
-end
+%if ~IsDone
+%    Reward = -1;
+%else
+     Reward = (1/sum(transmit_pow))*(min(SINR)>LoggedSignals.SINR_threshold);
+%end
 
 % -------------- Update Logged Signals ------------------
 LoggedSignals.step_index = LoggedSignals.step_index+1;  % Update new step index
