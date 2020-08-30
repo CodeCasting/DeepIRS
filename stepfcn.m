@@ -55,16 +55,12 @@ for  user_ind = 1 : N_users
     SINR(user_ind) = norm(desired,2)^2/norm(interf,2)^2;
 end
 
-
-
-SINR_violation_flag= min(SINR)<LoggedSignals.SINR_threshold;
-SINR_violation = min(SINR)-LoggedSignals.SINR_threshold;
-IsDone = 1-SINR_violation_flag;
+IsDone = 0; %min(SINR)>LoggedSignals.SINR_threshold;
 
 %if ~IsDone
 %    Reward = -1;
 %else
-     Reward = (1/sum(transmit_pow))*(1-SINR_violation_flag) + SINR_violation_flag*SINR_violation;
+     Reward = (1/sum(transmit_pow)); %*(min(SINR)>LoggedSignals.SINR_threshold)
 %end
 
 % -------------- Update Logged Signals ------------------

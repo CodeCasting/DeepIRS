@@ -3,10 +3,12 @@
 function [InitialObservation,LoggedSignals] = resetfcn(H_mat, sigma_2, SINR_threshold, state_design)
 
 % -------------- Initialized Logged Signals ------------------
+% Initialize channel/step index
 if exist('LoggedSignals.chan_index','var') == 0
- LoggedSignals.chan_index = 0;
+    LoggedSignals.chan_index = 1;
+% else
+%     LoggedSignals.chan_index = LoggedSignals.chan_index + 1;
 end
-LoggedSignals.chan_index = LoggedSignals.chan_index + 1;                                   % Initialize channel/step index
 LoggedSignals.step_index = 1;
 LoggedSignals.StateDes = state_design;
 LoggedSignals.sigma_2 = sigma_2;                                % Noise variance for all users

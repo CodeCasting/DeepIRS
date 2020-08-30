@@ -51,9 +51,9 @@ lam_c= 1e-5;    % decaying rate for training critic network update
 t_c = 1e-1;     % learning rate for target critic network update
 
 % ------------- Created DDPG AGENT Options -------------------
-D = 1e5;        % Length of replay experience memory window
+D = 2e5;        % Length of replay experience memory window
 W_exp = 16;     % Number of experiences in the mini-batch
-gam = 0.999999;     % Discount factor
+gam = 0.000001;     % Discount factor
 U = 1;          % Number of steps synchronizing target with training network
 
 % ------------- For DDPG AGENT Training ----------------------
@@ -74,7 +74,7 @@ act_len = M+ 2*N_BS* N_users; % 2*(M + N_BS* N_users);
 transmit_pow_len = 2*N_users;
 receive_pow_len = 2*N_users^2;
 
-chan_state_design = 1;
+chan_state_design = 2;
 switch chan_state_design
     case 1
         obs_len = chan_obs_len + transmit_pow_len + receive_pow_len + act_len;
@@ -267,6 +267,7 @@ DDPG_AGENT = rlDDPGAgent(ACTOR,CRITIC,DDPG_agent_OPTIONS);
 %% Let the agent interact with the environment
 % https://www.mathworks.com/help/reinforcement-learning/ug/train-reinforcement-learning-agents.html
 % https://www.mathworks.com/help/reinforcement-learning/ref/rl.agent.rlqagent.train.html
+disp('------- Training Agent --------')
 
 % Training Options
 DDPG_train_options = rlTrainingOptions(...

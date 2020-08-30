@@ -32,11 +32,11 @@ profile on
 Ut_row = 850;               % user Ut row number
 Ut_element = 90;            % user Ut col number
 % yet to add its MIMO functionality
-N_BS = 6;                   % Number of BS antennas
+N_BS = 3;                    % Number of BS antennas
 %Pt = 100;                   % Transmit power in dBm
 
 % ----------- Users -----------
-N_users= 3;                 % Number of Users
+N_users= 2;                 % Number of Users
 % Users will be randomized from the following region (between the following rows)
 % each row contains 181 possible user locations
 Ur_rows = [1000 1300];      % user Ur rows
